@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f5f2" id="tc">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="GoFit">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Your personalised gym plan with exercise demos, calories, meals and progress tracking.">
 <title>Your gym plan</title>
 <style>
 :root{--bg:#f6f5f2;--card:#fff;--tx:#1b1b1b;--mut:#6b6b6b;--ac:#e2b000;--on:#1a1a1a;--ln:#e4e1da;--ok:#2b8a3e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -98,7 +107,15 @@ body.quiz{padding-bottom:28px}
 .how{margin-top:8px;padding:10px 12px;border-radius:10px;background:var(--bg);border:1px solid var(--ln)}.how ol{margin:0;padding-left:20px;font-size:13.5px}.how li{margin:5px 0}
 .mvp .fv{flex:1 1 40%;min-width:130px;stroke:var(--tx);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;fill:none}.fv circle.eq{fill:var(--ac);stroke:none}
 .fv .pr *{stroke:var(--mut);stroke-width:2}
-</style></head><body class="quiz">
+</style>
+<style>
+#pwa-bar{position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:9999;max-width:620px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--card);color:var(--tx);border:1px solid var(--ln);box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:14px}
+#pwa-bar[hidden]{display:none}
+#pwa-bar span{flex:1;min-width:0}
+#pwa-bar button{font:inherit;font-weight:700;cursor:pointer;border-radius:10px;padding:9px 14px;border:0;background:var(--ac);color:var(--on)}
+#pwa-bar button.x{background:transparent;color:var(--mut);padding:6px 8px;font-weight:400}
+</style>
+</head><body class="quiz">
 <div class="w" id="quiz">
 <h1>Let's customise it for your gym</h1>
 <div class="sub">Five training questions, then a few body details. Your plan, calories and protein follow your answers.</div>
@@ -809,4 +826,36 @@ th();
 tick();
 if(S.p)dp=copyP(S.p);
 if(validQ(S.q))showApp();else showQuiz();
-</script></body></html>
+</script>
+<div id="pwa-bar" hidden role="status"><span id="pwa-msg"></span><button type="button" id="pwa-go"></button><button type="button" class="x" id="pwa-x" aria-label="Dismiss">✕</button></div>
+<script>
+(function(){
+  var tc=document.getElementById("tc"),root=document.documentElement;
+  function syncTheme(){var a=root.getAttribute("data-theme"),dark=a?a==="dark":window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches;tc.setAttribute("content",dark?"#121212":"#f6f5f2")}
+  syncTheme();
+  try{new MutationObserver(syncTheme).observe(root,{attributes:true,attributeFilter:["data-theme"]})}catch(e){}
+  try{var mq=matchMedia("(prefers-color-scheme: dark)");mq.addEventListener?mq.addEventListener("change",syncTheme):mq.addListener(syncTheme)}catch(e){}
+
+  if("serviceWorker" in navigator&&location.protocol!=="file:"){
+    window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js",{scope:"./"}).catch(function(){})});
+  }
+
+  var KEY="gofit-install-hide",bar=document.getElementById("pwa-bar"),msg=document.getElementById("pwa-msg"),go=document.getElementById("pwa-go"),later=null,evt=null;
+  var standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+  function snoozed(){try{var t=+localStorage.getItem(KEY);return !!t&&Date.now()-t<6048e5}catch(e){return false}}
+  function hide(remember){bar.hidden=true;if(remember){try{localStorage.setItem(KEY,String(Date.now()))}catch(e){}}}
+  function show(text,label,fn){if(standalone||snoozed())return;msg.textContent=text;go.textContent=label;later=fn;bar.hidden=false}
+  go.onclick=function(){var f=later;hide(true);if(f)f()};
+  document.getElementById("pwa-x").onclick=function(){hide(true)};
+
+  window.addEventListener("beforeinstallprompt",function(e){
+    e.preventDefault();evt=e;
+    show("Install GoFit on your phone for quick, offline access.","Install",function(){if(evt){evt.prompt();evt=null}});
+  });
+  window.addEventListener("appinstalled",function(){hide(false)});
+
+  var ua=navigator.userAgent||"",ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  if(ios&&!standalone){setTimeout(function(){show("To install: tap the Share button, then “Add to Home Screen”.","Got it",null)},2500)}
+})();
+</script>
+</body></html>
