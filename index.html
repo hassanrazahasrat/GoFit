@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GL3YFWTKK7"></script>
+<script>
+window.dataLayer=window.dataLayer||[];
+function gtag(){dataLayer.push(arguments);}
+gtag("js",new Date());
+gtag("config","G-GL3YFWTKK7");
+</script>
 <meta name="theme-color" content="#e7f6f2" id="tc">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -234,6 +241,7 @@ var O="",raf=0;
 function sv(){try{localStorage.setItem("wp1",JSON.stringify(S))}catch(e){}}
 function th(){if(S.th)document.documentElement.setAttribute("data-theme",S.th);else document.documentElement.removeAttribute("data-theme")}
 var $=function(i){return document.getElementById(i)};
+function ga(name,p){try{if(window.gtag)gtag("event",name,p||{})}catch(e){}}
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 function restLabel(sec){return Math.floor(sec/60)+":"+("0"+sec%60).slice(-2)}
 var QUIZ=[
@@ -491,6 +499,7 @@ $("app").hidden=true;
 $("t").hidden=true;
 $("nav").hidden=true;
 renderQuiz();
+ga("quiz_open");
 }
 function showApp(){
 document.body.classList.remove("quiz");
@@ -541,20 +550,20 @@ if(O&&$("av"))an(M[S.d][+O.split("-")[1]].split("|")[0]);else cancelAnimationFra
 var iv,left=0;
 function tick(){$("tt").textContent=Math.floor(left/60)+":"+("0"+left%60).slice(-2);$("t").className=left>0?"go":"end";if($("app")&&!$("app").hidden)$("t").hidden=left<=0}
 function rest(n){clearInterval(iv);left=n;tick();iv=setInterval(function(){left--;if(left<=0){left=0;clearInterval(iv);try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}tick()},1000)}
-$("tabs").onclick=function(e){var b=e.target.closest("button");if(b){S.d=+b.dataset.i;sv();draw()}};
-$("list").onclick=function(e){var sp=e.target.closest("[data-split]");if(sp){var name=sp.dataset.split,n=+sp.dataset.n,a=weights(name,n);if(S.wm[name]==="each"){var fill="";for(var i=0;i<n;i++)if(a[i]){fill=a[i];break}for(var j=0;j<n;j++)a[j]=fill;saveWeights(name,a);S.wm[name]="same"}else S.wm[name]="each";sv();draw();return}var b=e.target.closest(".setb");if(!b)return;var k=b.dataset.k,s=+b.dataset.s;S.c[k]=S.c[k]||[];S.c[k][s]=!S.c[k][s];logSession();sv();draw();if(S.c[k][s])rest(+b.dataset.r)};
+$("tabs").onclick=function(e){var b=e.target.closest("button");if(b){S.d=+b.dataset.i;ga("training_day",{day_index:S.d+1});sv();draw()}};
+$("list").onclick=function(e){var sp=e.target.closest("[data-split]");if(sp){var name=sp.dataset.split,n=+sp.dataset.n,a=weights(name,n);if(S.wm[name]==="each"){var fill="";for(var i=0;i<n;i++)if(a[i]){fill=a[i];break}for(var j=0;j<n;j++)a[j]=fill;saveWeights(name,a);S.wm[name]="same"}else S.wm[name]="each";ga("weight_mode",{mode:S.wm[name]});sv();draw();return}var b=e.target.closest(".setb");if(!b)return;var k=b.dataset.k,s=+b.dataset.s;S.c[k]=S.c[k]||[];S.c[k][s]=!S.c[k][s];ga(S.c[k][s]?"set_done":"set_clear");logSession();sv();draw();if(S.c[k][s])rest(+b.dataset.r)};
 $("list").oninput=function(e){var t=e.target,name=t.dataset.ex;if(!name)return;var n=+t.dataset.n||1,a=weights(name,n);if(t.dataset.same){for(var i=0;i<n;i++)a[i]=t.value}else a[+t.dataset.i]=t.value;saveWeights(name,a);bumpPR(name,a);sv();paintPR(name)};
-$("a").onclick=function(){rest(left+30)};
-$("s").onclick=function(){clearInterval(iv);left=0;tick()};
-$("fin").onclick=function(){logSession();Object.keys(S.c).forEach(function(k){if(k.split("-")[0]==S.d)delete S.c[k]});if(S.d<D.length-1){S.d++;window.scrollTo(0,0)}sv();draw();goTab("home")};
-function toggleTheme(){S.th=S.th=="dark"?"light":"dark";sv();th()}
+$("a").onclick=function(){ga("rest_extend");rest(left+30)};
+$("s").onclick=function(){ga("rest_stop");clearInterval(iv);left=0;tick()};
+$("fin").onclick=function(){ga("session_finish");logSession();Object.keys(S.c).forEach(function(k){if(k.split("-")[0]==S.d)delete S.c[k]});if(S.d<D.length-1){S.d++;window.scrollTo(0,0)}sv();draw();goTab("home")};
+function toggleTheme(){S.th=S.th=="dark"?"light":"dark";ga("theme",{theme:S.th});sv();th()}
 $("th").onclick=toggleTheme;
 $("qth").onclick=toggleTheme;
 $("qq").onclick=function(e){var b=e.target.closest("button");if(!b)return;
-if(b.dataset.p){var id=b.dataset.p,v=b.dataset.v;if(id==="u"&&dp.u!==v)convU(v);dp[id]=v;if(id==="goal"&&(v==="keep"||v==="recomp"))dp.pace="";renderQuiz();return}
-if(!b.dataset.k)return;draft[b.dataset.k]=b.dataset.v;renderQuiz()};
+if(b.dataset.p){var id=b.dataset.p,v=b.dataset.v;if(id==="u"&&dp.u!==v)convU(v);dp[id]=v;if(id==="goal"&&(v==="keep"||v==="recomp"))dp.pace="";if(id==="u"||id==="act"||id==="goal"||id==="pace")ga("profile_choice",{field:id,answer:v});renderQuiz();return}
+if(!b.dataset.k)return;draft[b.dataset.k]=b.dataset.v;ga("quiz_choice",{question:b.dataset.k,answer:b.dataset.v});renderQuiz()};
 $("qq").oninput=function(e){var k=e.target.dataset.pi;if(!k)return;if(k==="ft"||k==="in"){var box=e.target.closest(".fld"),ft=parseFloat(box.querySelector("[data-pi=ft]").value)||0,inch=parseFloat(String(box.querySelector("[data-pi=in]").value).replace(",","."))||0;dp.h=(ft||inch)?String(Math.round((ft*12+inch)*10)/10):"";updBuild();return}dp[k]=e.target.value.replace(",",".");updBuild()};
-$("build").onclick=function(){if(!validQ(draft)||!validP(dp))return;if(S.p&&S.p.u&&S.p.u!==dp.u)convLifts(S.p.u,dp.u||"m");S.p=copyP(dp);var next=copyQ(draft);var changed=JSON.stringify(S.q||null)!==JSON.stringify(next);S.q=next;if(changed){S.c={};S.d=0;O=""}sv();showApp();window.scrollTo(0,0)};
+$("build").onclick=function(){if(!validQ(draft)||!validP(dp))return;if(S.p&&S.p.u&&S.p.u!==dp.u)convLifts(S.p.u,dp.u||"m");S.p=copyP(dp);var next=copyQ(draft);var changed=JSON.stringify(S.q||null)!==JSON.stringify(next);S.q=next;if(changed){S.c={};S.d=0;O=""}ga("plan_save",{days:next.days,goal:next.goal,session:next.time,equipment:next.equip,level:next.level});sv();showApp();window.scrollTo(0,0)};
 $("back").onclick=function(){if(!validQ(S.q))return;showApp();window.scrollTo(0,0)};
 $("ed").onclick=function(){draft=copyQ(S.q);dp=copyP(S.p||dp);showQuiz();window.scrollTo(0,0)};
 function dk(){return new Date().toLocaleDateString("en-CA")}
@@ -711,18 +720,18 @@ $("ml").innerHTML='<div class="mtop"><div class="chips" style="flex:1"><button t
 }
 function lgm(sl){var d=dk(),m=MP[sl]||[0,0,0,0];S.e=S.e||{};S.ml=S.ml||{};var g=S.ml[d]=S.ml[d]||{},o=S.e[d]=S.e[d]||{k:0,p:0,c:0,f:0};
 function apply(a,sign){o.k+=sign*(a[0]||0);o.p+=sign*(a[1]||0);o.c=(o.c||0)+sign*(a[2]||0);o.f=(o.f||0)+sign*(a[3]||0)}
-if(g[sl]){apply(g[sl],-1);delete g[sl]}else{g[sl]=[m[0],m[1],m[2]||0,m[3]||0];apply(g[sl],1)}
+if(g[sl]){apply(g[sl],-1);delete g[sl];ga("meal_clear",{meal:sl})}else{g[sl]=[m[0],m[1],m[2]||0,m[3]||0];apply(g[sl],1);ga("meal_log",{meal:sl})}
 sv();nd()}
 $("ml").onclick=function(e){var b=e.target.closest("button");if(!b)return;
-if(b.dataset.dt){S.vg=b.dataset.dt==="v";sv();nd()}
-else if(b.dataset.mo){var a=b.dataset.mo.split(":");S.mp=S.mp||{};S.mp[a[0]]=a[1];sv();nd()}
+if(b.dataset.dt){S.vg=b.dataset.dt==="v";ga("diet",{vegetarian:S.vg?"yes":"no"});sv();nd()}
+else if(b.dataset.mo){var a=b.dataset.mo.split(":");S.mp=S.mp||{};S.mp[a[0]]=a[1];ga("meal_swap",{meal:a[0]});sv();nd()}
 else if(b.dataset.lg)lgm(b.dataset.lg)};
 /*END*/
 
 $("nt").onclick=function(e){if(e.target.id==="addp"){draft=copyQ(S.q);dp=copyP(S.p||dp);showQuiz();window.scrollTo(0,0)}};
-$("ch").onclick=function(e){var b=e.target.closest("button");if(b){S.n=b.dataset.n;sv();nd()}};
-$("ad").onclick=function(){var k=+$("ek").value||0,p=+$("ep").value||0,c=+$("ec").value||0,f=+$("ef").value||0;S.e=S.e||{};var d=dk(),o=S.e[d]||{k:0,p:0,c:0,f:0};S.e[d]={k:(o.k||0)+k,p:(o.p||0)+p,c:(o.c||0)+c,f:(o.f||0)+f};$("ek").value="";$("ep").value="";$("ec").value="";$("ef").value="";sv();nd()};
-$("ud").onclick=function(){S.e=S.e||{};delete S.e[dk()];sv();nd()};
+$("ch").onclick=function(e){var b=e.target.closest("button");if(b){S.n=b.dataset.n;ga("nutrition_day",{day:b.dataset.n});sv();nd()}};
+$("ad").onclick=function(){var k=+$("ek").value||0,p=+$("ep").value||0,c=+$("ec").value||0,f=+$("ef").value||0;if(!(k||p||c||f))return;S.e=S.e||{};var d=dk(),o=S.e[d]||{k:0,p:0,c:0,f:0};S.e[d]={k:(o.k||0)+k,p:(o.p||0)+p,c:(o.c||0)+c,f:(o.f||0)+f};$("ek").value="";$("ep").value="";$("ec").value="";$("ef").value="";ga("food_add");sv();nd()};
+$("ud").onclick=function(){S.e=S.e||{};delete S.e[dk()];ga("food_reset");sv();nd()};
 var LB={chest:"Chest",delts:"Shoulders",reardelts:"Rear delts",biceps:"Biceps",triceps:"Triceps",forearms:"Forearms",abs:"Abs",obliques:"Obliques",lats:"Lats",traps:"Upper back",lowback:"Lower back",glutes:"Glutes",quads:"Quads",hams:"Hamstrings",calves:"Calves"};
 var FR={chest:[10,48,10,8],delts:[24,38,6,7],biceps:[26,58,4.5,10],forearms:[25,82,4,10],abs:[5,72,5,14],obliques:[15,74,4,13],quads:[9,132,9,24]};
 var BK={traps:[0,36,14,8],reardelts:[24,38,6,7],lats:[11,62,8,14],triceps:[26,58,4.5,10],forearms:[25,82,4,10],lowback:[0,84,10,7],glutes:[8,108,9,8],hams:[9,138,8,20],calves:[9,175,7,14]};
@@ -845,7 +854,7 @@ for(var k in R){var c=P.indexOf(k)>=0?"hp":Q.indexOf(k)>=0?"hs":"";if(c){var r=R
 return s+'<text x="50" y="209" text-anchor="middle" font-size="11" style="fill:var(--mut)">'+n+"</text></svg>"}
 function pn(d,j){var m=M[d][j].split("|"),t=m[0],P=m[1].split(","),Q=m[2]?m[2].split(","):[],L=function(a){return a.map(function(x){return LB[x]}).join(", ")};
 return '<div class="mvp"><svg class="av" id="av" viewBox="0 0 100 100">'+(FP[t]?'<text x="4" y="10" font-size="7" style="fill:var(--mut);stroke:none">Side view</text>':"")+'<path class="fl" d="M0 92H100"/><g class="pr">'+(PR[t]||"")+'</g><polyline id="lg"/><line id="to"/><polyline id="ar"/><circle id="hd" r="6"/><circle id="eq" r="4" style="display:'+(NE.indexOf(t)<0?"inline":"none")+'"/></svg>'+(FP[t]?'<svg class="fv" id="fv" viewBox="0 0 100 100"><text x="4" y="10" font-size="7" style="fill:var(--mut);stroke:none">'+(VL[t]||"Front view")+'</text><g class="pr">'+(PF[t]||"")+'</g><circle id="fh" r="7"/><path id="ft"/><polyline id="fa"/><polyline id="fb"/><polyline id="fc"/><polyline id="fd"/><circle class="eq" id="fe1" r="3.5"/><circle class="eq" id="fe2" r="3.5"/></svg>':"")+'<div class="bd">'+bd(FR,P,Q,"Front")+bd(BK,P,Q,"Back")+'</div></div><div class="note"><b>Feel it in:</b> '+L(P)+" (main, solid color)"+(Q.length?" · helping: "+L(Q)+" (light color)":"")+". New to this lift? Start light, move slowly (about 2 s up, 2 s down) and copy the animation.</div>"}
-$("list").addEventListener("click",function(e){var b=e.target.closest(".mv");if(!b)return;if(b.dataset.h){HO[b.dataset.h]=!HO[b.dataset.h];draw();return}O=O==b.dataset.m?"":b.dataset.m;draw()});
+$("list").addEventListener("click",function(e){var b=e.target.closest(".mv");if(!b)return;if(b.dataset.h){HO[b.dataset.h]=!HO[b.dataset.h];ga("exercise_steps");draw();return}O=O==b.dataset.m?"":b.dataset.m;ga(O?"exercise_demo":"exercise_demo_hide");draw()});
 function logSession(){
 if(!D[S.d]||!D[S.d].e)return;
 var day=D[S.d],tot=0,dn=0;
@@ -879,9 +888,9 @@ function renderProg(){var rows=sortedWl(),last=rows.length?rows[rows.length-1]:n
 function renderYou(){var r=S.p&&calcP(S.p,S.q&&S.q.days),nm=S.p&&S.p.nm?String(S.p.nm).trim():"",shown=nm?esc(nm):"You",initial=(nm||"Y").charAt(0).toUpperCase(),tiles=r&&r.ready?'<div class="tiles"><div class="tile"><small>BMI</small><b>'+r.bmi.toFixed(1)+'</b></div><div class="tile"><small>BMR</small><b>'+fm(r.bmr)+'</b></div><div class="tile"><small>Maintenance</small><b>'+fm(r.tdee)+'</b></div><div class="tile"><small>Target kcal</small><b>'+fm(r.k)+'</b></div></div>':"";$("viewy").innerHTML='<div class="apphead"><div><div class="kicker">Profile</div><div class="hello">'+shown+'</div><div class="sub">Units, calories and the plan behind each day.</div></div><div class="avatar" aria-hidden="true">'+initial+'</div></div>'+tiles+'<div class="card"><h3>Your numbers</h3><div class="note">'+(r&&r.bmr?"BMR uses Mifflin-St Jeor. Maintenance multiplies it by daily life and training days. Protein, fat and carbs start from your weight and goal, then meals are portioned from the food list.":"Add your details to calculate BMI, BMR and calories.")+'</div><div class="act"><button type="button" class="p" data-edit="1">Update plan</button><button type="button" data-theme="1">Theme</button></div></div><div class="card"><h3>Saved on this device</h3><div class="note">Weight, meals and lifts stay in this browser. They are not uploaded. Clearing site data removes them. Progress photos are not stored yet.</div></div>'}
 function paintNav(){var buttons=$("nav").querySelectorAll("button"),i;for(i=0;i<buttons.length;i++)buttons[i].className=buttons[i].dataset.tab===(S.tab||"home")?"on":""}
 function renderShell(){if(!$("app")||$("app").hidden)return;paintNav();if((S.tab||"home")==="home")renderHome();if(S.tab==="prog")renderProg();if(S.tab==="you")renderYou()}
-function goTab(id){S.tab=id;$("viewh").hidden=id!=="home";$("viewt").hidden=id!=="train";$("viewm").hidden=id!=="meals";$("viewp").hidden=id!=="prog";$("viewy").hidden=id!=="you";if(!$("app").hidden)$("t").hidden=left<=0;sv();renderShell();window.scrollTo(0,0)}
+function goTab(id){S.tab=id;$("viewh").hidden=id!=="home";$("viewt").hidden=id!=="train";$("viewm").hidden=id!=="meals";$("viewp").hidden=id!=="prog";$("viewy").hidden=id!=="you";if(!$("app").hidden)$("t").hidden=left<=0;ga("screen_view",{screen_name:id});sv();renderShell();window.scrollTo(0,0)}
 $("nav").onclick=function(e){var b=e.target.closest("button");if(b&&b.dataset.tab)goTab(b.dataset.tab)};
-$("app").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;if(b.dataset.go){goTab(b.dataset.go);return}if(b.dataset.water){S.wa=S.wa||{};S.wa[dk()]=(S.wa[dk()]||0)+(+b.dataset.water);sv();renderShell();return}if(b.dataset.edit){$("ed").click();return}if(b.dataset.theme){toggleTheme();return}if(b.dataset.save==="wt"){var kg=toKg(b.parentNode.querySelector("input").value,liftUnit());if(!(kg>20))return;S.wl=S.wl||[];var d=dk(),row={d:d,kg:Math.round(kg*100)/100},i,found=false;for(i=0;i<S.wl.length;i++)if(S.wl[i].d===d){S.wl[i]=row;found=true}if(!found)S.wl.push(row);S.wl.sort(function(a,c){return a.d<c.d?-1:1});sv();renderShell();return}if(b.dataset.save==="steps"){var n=parseInt(b.parentNode.querySelector("input").value,10);if(!(n>=0)||n>100000)return;S.sp=S.sp||{};S.sp[dk()]=n;sv();renderShell();return}if(b.dataset.save==="meas"){var box=b.closest(".card"),inputs=box.querySelectorAll("[data-m]"),rec={d:dk()},any=false,k;for(k=0;k<inputs.length;k++){var raw=numW(inputs[k].value),cm=liftUnit()==="i"?raw*2.54:raw;if(cm>20&&cm<200){rec[inputs[k].dataset.m]=Math.round(cm*10)/10;any=true}}if(!any)return;S.bh=S.bh||[];var j,hit=false;for(j=0;j<S.bh.length;j++)if(S.bh[j].d===rec.d){Object.assign(S.bh[j],rec);hit=true}if(!hit)S.bh.push(rec);sv();renderShell()}});
+$("app").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;if(b.dataset.go){goTab(b.dataset.go);return}if(b.dataset.water){S.wa=S.wa||{};S.wa[dk()]=(S.wa[dk()]||0)+(+b.dataset.water);ga("water_add",{ml:+b.dataset.water});sv();renderShell();return}if(b.dataset.edit){$("ed").click();return}if(b.dataset.theme){toggleTheme();return}if(b.dataset.save==="wt"){var kg=toKg(b.parentNode.querySelector("input").value,liftUnit());if(!(kg>20))return;S.wl=S.wl||[];var d=dk(),row={d:d,kg:Math.round(kg*100)/100},i,found=false;for(i=0;i<S.wl.length;i++)if(S.wl[i].d===d){S.wl[i]=row;found=true}if(!found)S.wl.push(row);S.wl.sort(function(a,c){return a.d<c.d?-1:1});ga("weigh_in");sv();renderShell();return}if(b.dataset.save==="steps"){var n=parseInt(b.parentNode.querySelector("input").value,10);if(!(n>=0)||n>100000)return;S.sp=S.sp||{};S.sp[dk()]=n;ga("steps_save");sv();renderShell();return}if(b.dataset.save==="meas"){var box=b.closest(".card"),inputs=box.querySelectorAll("[data-m]"),rec={d:dk()},any=false,k;for(k=0;k<inputs.length;k++){var raw=numW(inputs[k].value),cm=liftUnit()==="i"?raw*2.54:raw;if(cm>20&&cm<200){rec[inputs[k].dataset.m]=Math.round(cm*10)/10;any=true}}if(!any)return;S.bh=S.bh||[];var j,hit=false;for(j=0;j<S.bh.length;j++)if(S.bh[j].d===rec.d){Object.assign(S.bh[j],rec);hit=true}if(!hit)S.bh.push(rec);ga("measurements_save");sv();renderShell()}});
 th();
 tick();
 if(S.p)dp=copyP(S.p);
@@ -912,7 +921,7 @@ if(validQ(S.q))showApp();else showQuiz();
     e.preventDefault();evt=e;
     show("Install GoFit on your phone for quick, offline access.","Install",function(){if(evt){evt.prompt();evt=null}});
   });
-  window.addEventListener("appinstalled",function(){hide(false)});
+  window.addEventListener("appinstalled",function(){hide(false);try{gtag("event","pwa_install")}catch(e){}});
 
   var ua=navigator.userAgent||"",ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
   if(ios&&!standalone){setTimeout(function(){show("To install: tap the Share button, then “Add to Home Screen”.","Got it",null)},2500)}
