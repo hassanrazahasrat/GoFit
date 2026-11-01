@@ -27,8 +27,9 @@ jobs:
       - name: Prepare site
         run: |
           set -euo pipefail
-          mkdir -p _site
-          cp index.html _site/
+          mkdir -p _site/icons
+          cp index.html manifest.webmanifest sw.js _site/
+          cp icons/icon-192.png icons/icon-512.png icons/maskable-512.png icons/apple-touch-icon.png icons/favicon-32.png _site/icons/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
