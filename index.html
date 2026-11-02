@@ -18,6 +18,9 @@ gtag("config","G-GL3YFWTKK7");
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="Your personalised gym plan with exercise demos, calories, meals and progress tracking.">
 <title>Your gym plan</title>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/"}}
+</script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 window.sb = createClient(
@@ -177,9 +180,19 @@ body.quiz{padding-bottom:28px}
 [hidden]{display:none !important}
 .mvr{display:flex;gap:8px;margin-top:8px}.mvr .mv{flex:1;width:auto;margin:0}
 .how{margin-top:8px;padding:12px 14px;border-radius:16px;background:var(--bg)}.how ol{margin:0;padding-left:20px;font-size:13.5px}.how li{margin:5px 0}
+.stage3d{margin:12px auto 0;max-width:560px;border-radius:22px;overflow:hidden;background:#10141c}
+.stage3d .demo3d{height:min(70vh,640px);min-height:420px}
+.stage3d svg{display:block;width:100%;height:auto}
+.stage3d .key{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center;padding:2px 12px 14px;color:#d5dbe6;font-size:12px;font-weight:700}
+.stage3d .key i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
 .mvp .fv{flex:1 1 40%;min-width:130px;stroke:var(--tx);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;fill:none}.fv circle.eq{fill:var(--ac);stroke:none}
 .fv .pr *{stroke:var(--mut);stroke-width:2}
 #auth .fld{grid-template-columns:1fr}#am{min-height:18px;margin-top:8px}
+#auth .gsep{display:flex;align-items:center;gap:10px;margin:14px 0 0;color:var(--mut);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+#auth .gsep:before,#auth .gsep:after{content:"";flex:1;height:1px;background:var(--ln)}
+#agoogle{width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 16px;border-radius:16px;border:0;background:var(--bg);color:var(--tx);font:inherit;font-size:15px;font-weight:800;cursor:pointer;box-shadow:inset 0 0 0 1px var(--ln)}
+#agoogle svg{width:18px;height:18px;flex:none}
+#agoogle:disabled{opacity:.45;cursor:default}
 </style>
 <style>
 #pwa-bar{position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:9999;max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--card);color:var(--tx);border:1px solid var(--ln);box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:14px}
@@ -197,6 +210,8 @@ body.quiz{padding-bottom:28px}
 <div class="fld"><div><label for="ae">Email</label><input id="ae" type="email" autocomplete="username" placeholder="you@email.com"></div><div><label for="ap">Password</label><input id="ap" type="password" autocomplete="current-password" placeholder="At least 6 characters"></div></div>
 <div class="note" id="am">Connecting…</div>
 <div class="act"><button id="ain" class="p" type="button">Sign in</button><button id="aup" type="button">Create account</button></div>
+<div class="gsep">or</div>
+<button id="agoogle" type="button"><svg viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>Continue with Google</button>
 </div>
 </div>
 <div class="w" id="quiz" hidden>
@@ -255,7 +270,7 @@ if(!S.wa)S.wa={};
 if(!S.sp)S.sp={};
 if(!S.bh)S.bh=[];
 if(!S.d)S.d=0;
-var sbUser=null,lastCloudError="",syncNote="",cloudChain=Promise.resolve(),openSession=null,pendingSnap=null,workoutTimer=0,EXBANK=[];
+var sbUser=null,lastCloudError="",syncNote="",cloudChain=Promise.resolve(),openSession=null,pendingSnap=null,workoutTimer=0,EXBANK=[],enterFlight=null;
 var draft={},dp=copyP({}),qdone=0;
 var O="",raf=0;
 function sv(){try{localStorage.setItem("wp1",JSON.stringify(S))}catch(e){}}
@@ -590,8 +605,28 @@ function prInfo(name){var p=S.pr&&S.pr[name];if(!p||!(p.kg>0))return {t:"No PR y
 function bumpPR(name,a){var best=0;a.forEach(function(v){var kg=toKg(v,liftUnit());if(isFinite(kg)&&kg>best)best=kg});if(!(best>0))return;if(!S.pr)S.pr={};var cur=S.pr[name];if(!cur||best>cur.kg+0.05)S.pr[name]={kg:Math.round(best*100)/100,d:dk()}}
 function paintPR(name){var info=prInfo(name),nodes=document.querySelectorAll("[data-pr]");for(var i=0;i<nodes.length;i++)if(nodes[i].dataset.pr===name){nodes[i].textContent=info.t;nodes[i].className=info.none?"prl none":"prl"}}
 function setsHtml(name,k,n,c,rest){var a=weights(name,n),u=unitWord(),each=S.wm&&S.wm[name]==="each",html="",s,info=prInfo(name);if(each){html+='<div class="sl">';for(s=0;s<n;s++)html+='<div class="row"><button type="button" class="setb'+(c[s]?" d":"")+'" data-k="'+k+'" data-s="'+s+'" data-r="'+rest+'">'+(s+1)+'</button><input class="wt" inputmode="decimal" placeholder="'+u+'" value="'+esc(a[s]||"")+'" data-ex="'+esc(name)+'" data-i="'+s+'" data-n="'+n+'"><span class="unit">'+u+"</span></div>";html+='</div><button type="button" class="spl" data-split="'+esc(name)+'" data-n="'+n+'">Same weight for every set</button>'}else{var b="";for(s=0;s<n;s++)b+='<button type="button" class="setb'+(c[s]?" d":"")+'" data-k="'+k+'" data-s="'+s+'" data-r="'+rest+'">'+(s+1)+"</button>";html+='<div class="row"><div class="sets">'+b+'</div><input class="wt" inputmode="decimal" placeholder="'+u+'" value="'+esc(a[0]||"")+'" data-ex="'+esc(name)+'" data-same="1" data-n="'+n+'"><span class="unit">'+u+'</span></div><button type="button" class="spl" data-split="'+esc(name)+'" data-n="'+n+'">Different weight each set</button>'}return html+'<div class="'+(info.none?"prl none":"prl")+'" data-pr="'+esc(name)+'">'+esc(info.t)+"</div>"}
+var DEMO3D={lat:1,press:1,ipress:1,ohp:1,dips:1,push:1,pushup:1,ipush:1,dpush:1,bdip:1,pike:1,oext:1,kick:1,skull:1,fly:1};
+function use3d(anim,name){
+if(DEMO3D[anim])return 1;
+var n=String(name||"").toLowerCase();
+return n.indexOf("push-up")>=0||n.indexOf("push up")>=0||n.indexOf("shoulder tap")>=0;
+}
+var trainDemo=null,trainDemoToken=0;
+function releaseTrainDemo(){trainDemoToken++;if(trainDemo){trainDemo.dispose();trainDemo=null}}
+function mountTrainDemo(){
+var host=$("demo3d");if(!host||trainDemo)return;
+var key=host.dataset.demo,name=host.dataset.name||"",token=++trainDemoToken;
+import("./js/exercises/registry.js").then(function(mod){
+var live=$("demo3d");
+if(token!==trainDemoToken||!live||live.dataset.demo!==key||(live.dataset.name||"")!==name)return;
+var spec=mod.exerciseDemo(key,name);
+if(!spec){live.textContent="This 3D demo is not ready yet.";return}
+trainDemo=mod.mountExerciseViewer(live,spec);
+}).catch(function(){var live=$("demo3d");if(token===trainDemoToken&&live)live.textContent="The 3D demo could not be loaded."});
+}
 function draw(){
 if(!D.length)return;
+releaseTrainDemo();
 if(S.d>=D.length||S.d<0)S.d=0;
 $("tabs").className="days"+(D.length>=5?" many":"");
 $("tabs").style.gridTemplateColumns="";
@@ -610,7 +645,7 @@ var all=c.filter(Boolean).length==e[1];
 return '<div class="card ex'+(all?" done":"")+'"><div class="exh"><span class="exn">'+(j+1)+'</span><div><h3>'+esc(e[0])+'</h3><div class="meta">'+e[1]+" sets · "+esc(e[2])+" · "+restLabel(e[3])+" rest</div></div></div>"+setsHtml(e[0],k,e[1],c,e[3])+'<div class="note">'+esc(e[4])+'</div><div class="mvr"><button type="button" class="mv" data-m="'+k+'">'+(O==k?"Hide demo":"Demo &amp; muscles")+'</button><button type="button" class="mv" data-h="'+k+'">'+(HO[k]?"Hide steps":"How to do it")+'</button></div>'+(HO[k]?hw(M[S.d][j].split("|")[0]):"")+(O==k?pn(S.d,j):"")+"</div>";
 }).join("");
 $("pb").style.width=(tot?dn/tot*100:0)+"%";
-if(O&&$("av"))an(M[S.d][+O.split("-")[1]].split("|")[0]);else cancelAnimationFrame(raf);
+if(O){if($("demo3d"))mountTrainDemo();else if($("av"))an(M[S.d][+O.split("-")[1]].split("|")[0])}else cancelAnimationFrame(raf);
 }
 var iv,left=0;
 function tick(){$("tt").textContent=Math.floor(left/60)+":"+("0"+left%60).slice(-2);$("t").className=left>0?"go":"end";if($("app")&&!$("app").hidden)$("t").hidden=left<=0}
@@ -915,6 +950,9 @@ bicy:["Lie on your back with your hands behind your head.","Bring one knee in an
 prony:["Lie face down with your arms forward in a Y shape.","Lift your arms off the floor, squeezing your shoulder blades together.","Lower slowly."]};
 function hw(t){var s=HW[t];return s?'<div class="how"><ol>'+s.map(function(x){return "<li>"+esc(x)+"</li>"}).join("")+"</ol></div>":""}
 function st(i,o){var e=$(i);if(e)for(var k in o)e.setAttribute(k,o[k])}
+function demoHost(key, name){
+return '<div class="stage3d"><div class="demo3d" id="demo3d" data-demo="'+esc(key)+'" data-name="'+esc(name)+'"></div></div>';
+}
 function an(t){cancelAnimationFrame(raf);if(!PS[t])return;var p=PS[t].split("|").map(function(x){return x.split(",").map(Number)}),a=p[0],b=p[1],t0=performance.now(),hd=HOLD[t],fp=FP[t]&&FP[t].split("|").map(function(x){return x.split(",").map(Number)});
 function ez(x){return (1-Math.cos(Math.PI*x))/2}
 function fr(n){if(!$("av"))return;var ph=((n-t0)%4000)/4000,u=hd?(ph<.35?ez(ph/.35):ph<.6?1:ph<.95?1-ez((ph-.6)/.35):0):(1-Math.cos(ph*6.2832))/2,q=a.map(function(v,i){return v+(b[i]-v)*u}),J=function(i){return q[2*i]+","+q[2*i+1]};
@@ -933,6 +971,7 @@ function bd(R,P,Q,n){var s='<svg viewBox="0 0 100 212"><circle class="sil" cx="5
 for(var k in R){var c=P.indexOf(k)>=0?"hp":Q.indexOf(k)>=0?"hs":"";if(c){var r=R[k];s+='<ellipse class="'+c+'" cx="'+(50+r[0])+'" cy="'+r[1]+'" rx="'+r[2]+'" ry="'+r[3]+'"/>';if(r[0])s+='<ellipse class="'+c+'" cx="'+(50-r[0])+'" cy="'+r[1]+'" rx="'+r[2]+'" ry="'+r[3]+'"/>'}}
 return s+'<text x="50" y="209" text-anchor="middle" font-size="11" style="fill:var(--mut)">'+n+"</text></svg>"}
 function pn(d,j){var m=M[d][j].split("|"),t=m[0],P=m[1].split(","),Q=m[2]?m[2].split(","):[],L=function(a){return a.map(function(x){return LB[x]}).join(", ")};
+if(use3d(t,D[d].e[j][0]))return demoHost(t,D[d].e[j][0]);
 return '<div class="mvp"><svg class="av" id="av" viewBox="0 0 100 100">'+(FP[t]?'<text x="4" y="10" font-size="7" style="fill:var(--mut);stroke:none">Side view</text>':"")+'<path class="fl" d="M0 92H100"/><g class="pr">'+(PR[t]||"")+'</g><polyline id="lg"/><line id="to"/><polyline id="ar"/><circle id="hd" r="6"/><circle id="eq" r="4" style="display:'+(NE.indexOf(t)<0?"inline":"none")+'"/></svg>'+(FP[t]?'<svg class="fv" id="fv" viewBox="0 0 100 100"><text x="4" y="10" font-size="7" style="fill:var(--mut);stroke:none">'+(VL[t]||"Front view")+'</text><g class="pr">'+(PF[t]||"")+'</g><circle id="fh" r="7"/><path id="ft"/><polyline id="fa"/><polyline id="fb"/><polyline id="fc"/><polyline id="fd"/><circle class="eq" id="fe1" r="3.5"/><circle class="eq" id="fe2" r="3.5"/></svg>':"")+'<div class="bd">'+bd(FR,P,Q,"Front")+bd(BK,P,Q,"Back")+'</div></div><div class="note"><b>Feel it in:</b> '+L(P)+" (main, solid color)"+(Q.length?" · helping: "+L(Q)+" (light color)":"")+". New to this lift? Start light, move slowly (about 2 s up, 2 s down) and copy the animation.</div>"}
 $("list").addEventListener("click",function(e){var b=e.target.closest(".mv");if(!b)return;if(b.dataset.h){HO[b.dataset.h]=!HO[b.dataset.h];ga("exercise_steps");draw();return}O=O==b.dataset.m?"":b.dataset.m;ga(O?"exercise_demo":"exercise_demo_hide");draw()});
 function logSession(){
@@ -968,7 +1007,7 @@ function renderProg(){var rows=sortedWl(),last=rows.length?rows[rows.length-1]:n
 function renderYou(){var r=S.p&&calcP(S.p,S.q&&S.q.days),nm=S.p&&S.p.nm?String(S.p.nm).trim():"",shown=nm?esc(nm):"You",initial=(nm||"Y").charAt(0).toUpperCase(),tiles=r&&r.ready?'<div class="tiles"><div class="tile"><small>BMI</small><b>'+r.bmi.toFixed(1)+'</b></div><div class="tile"><small>BMR</small><b>'+fm(r.bmr)+'</b></div><div class="tile"><small>Maintenance</small><b>'+fm(r.tdee)+'</b></div><div class="tile"><small>Target kcal</small><b>'+fm(r.k)+'</b></div></div>':"";$("viewy").innerHTML='<div class="apphead"><div><div class="kicker">Profile</div><div class="hello">'+shown+'</div><div class="sub">Units, calories and the plan behind each day.</div></div><div class="avatar" aria-hidden="true">'+initial+'</div></div>'+tiles+'<div class="card"><h3>Your numbers</h3><div class="note">'+(r&&r.bmr?"BMR uses Mifflin-St Jeor. Maintenance multiplies it by daily life and training days. Protein, fat and carbs start from your weight and goal, then meals are portioned from the food list.":"Add your details to calculate BMI, BMR and calories.")+'</div><div class="act"><button type="button" class="p" data-edit="1">Update plan</button><button type="button" data-theme="1">Theme</button></div></div><div class="card"><h3>Account</h3><div class="note">'+(lastCloudError?esc(lastCloudError):esc(syncNote||"Profile, goals, workouts, meals and measurements are saved to your account."))+'</div><div class="act"><button type="button" data-signout="1">Sign out</button></div></div>'}
 function paintNav(){var buttons=$("nav").querySelectorAll("button"),i;for(i=0;i<buttons.length;i++)buttons[i].className=buttons[i].dataset.tab===(S.tab||"home")?"on":""}
 function renderShell(){if(!$("app")||$("app").hidden)return;paintNav();if((S.tab||"home")==="home")renderHome();if(S.tab==="prog")renderProg();if(S.tab==="you")renderYou()}
-function goTab(id){S.tab=id;$("viewh").hidden=id!=="home";$("viewt").hidden=id!=="train";$("viewm").hidden=id!=="meals";$("viewp").hidden=id!=="prog";$("viewy").hidden=id!=="you";if(!$("app").hidden)$("t").hidden=left<=0;ga("screen_view",{screen_name:id});sv();renderShell();window.scrollTo(0,0)}
+function goTab(id){S.tab=id;$("viewh").hidden=id!=="home";$("viewt").hidden=id!=="train";$("viewm").hidden=id!=="meals";$("viewp").hidden=id!=="prog";$("viewy").hidden=id!=="you";if(!$("app").hidden)$("t").hidden=left<=0;if(id!=="train")releaseTrainDemo();else if($("demo3d")&&!trainDemo)mountTrainDemo();ga("screen_view",{screen_name:id});sv();renderShell();window.scrollTo(0,0)}
 $("nav").onclick=function(e){var b=e.target.closest("button");if(b&&b.dataset.tab)goTab(b.dataset.tab)};
 $("app").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;if(b.dataset.go){goTab(b.dataset.go);return}if(b.dataset.water){S.wa=S.wa||{};S.wa[dk()]=(S.wa[dk()]||0)+(+b.dataset.water);ga("water_add",{ml:+b.dataset.water});sv();pushDaily();renderShell();return}if(b.dataset.edit){$("ed").click();return}if(b.dataset.theme){toggleTheme();return}if(b.dataset.signout){signOut();return}if(b.dataset.save==="wt"){var kg=toKg(b.parentNode.querySelector("input").value,liftUnit());if(!(kg>20))return;S.wl=S.wl||[];var d=dk(),row={d:d,kg:Math.round(kg*100)/100},i,found=false;for(i=0;i<S.wl.length;i++)if(S.wl[i].d===d){S.wl[i]=row;found=true}if(!found)S.wl.push(row);S.wl.sort(function(a,c){return a.d<c.d?-1:1});ga("weigh_in");sv();pushWeigh(row.kg);renderShell();return}if(b.dataset.save==="steps"){var n=parseInt(b.parentNode.querySelector("input").value,10);if(!(n>=0)||n>100000)return;S.sp=S.sp||{};S.sp[dk()]=n;ga("steps_save");sv();pushDaily();renderShell();return}if(b.dataset.save==="meas"){var box=b.closest(".card"),inputs=box.querySelectorAll("[data-m]"),rec={d:dk()},any=false,k;for(k=0;k<inputs.length;k++){var raw=numW(inputs[k].value),cm=liftUnit()==="i"?raw*2.54:raw;if(cm>=8&&cm<200){rec[inputs[k].dataset.m]=Math.round(cm*10)/10;any=true}}if(!any)return;S.bh=S.bh||[];var j,hit=false;for(j=0;j<S.bh.length;j++)if(S.bh[j].d===rec.d){Object.assign(S.bh[j],rec);hit=true}if(!hit)S.bh.push(rec);ga("measurements_save");sv();pushMeas(rec);renderShell()}});
 function cloud(job){
@@ -987,6 +1026,34 @@ var n=new Date(),a=n.getFullYear()-d.getFullYear(),m=n.getMonth()-d.getMonth();
 if(m<0||(m===0&&n.getDate()<d.getDate()))a--;
 return a;
 }
+function setAuthBusy(on){
+["ain","aup","agoogle"].forEach(function(id){var el=$(id);if(el)el.disabled=!!on});
+}
+function authRedirect(){
+var path=location.pathname||"/";
+if(/\/index\.html$/i.test(path))path=path.slice(0,-"index.html".length);
+if(path.charAt(path.length-1)!=="/")path+="/";
+return location.origin+path;
+}
+function readOAuthError(){
+var query=new URLSearchParams(location.search),hash=new URLSearchParams(String(location.hash||"").replace(/^#/,""));
+var text=query.get("error_description")||hash.get("error_description")||query.get("error")||hash.get("error")||"";
+return googleAuthMessage(text);
+}
+function clearAuthParams(){
+var url=new URL(location.href),changed=false;
+["code","error","error_code","error_description","state"].forEach(function(k){if(url.searchParams.has(k)){url.searchParams.delete(k);changed=true}});
+if(/access_token|refresh_token|provider_token|error|expires_/.test(url.hash)){url.hash="";changed=true}
+if(changed)history.replaceState(null,"",url.pathname+url.search+url.hash);
+}
+function googleAuthMessage(err){
+var text=String(err&&err.message||err||"");
+if(!text)return "";
+if(/access_denied|cancel/i.test(text))return "Google sign-in was cancelled.";
+if(/provider is not enabled|unsupported provider/i.test(text))return "Google sign-in is not available yet.";
+if(/redirect|not allowed/i.test(text))return "Add this site to the Supabase redirect allow list, then try Google again.";
+return "Google sign-in could not be completed. Try again.";
+}
 function showAuth(){
 document.title="Sign in · GoFit";
 document.body.classList.add("quiz");
@@ -995,6 +1062,7 @@ $("quiz").hidden=true;
 $("app").hidden=true;
 $("t").hidden=true;
 $("nav").hidden=true;
+setAuthBusy(false);
 }
 function applyProfile(row){
 if(!row)return;
@@ -1310,11 +1378,26 @@ if(extras.some(function(i){return !X[i]}))return;
 slot.o.push(mo(r.id,r.title,r.emoji||"🍽️",r.protein_id,r.carb_id,extras,!!r.vegetarian,r.tip||""));
 });
 }
+async function ensureProfile(){
+var again=await window.sb.from("profiles").select("*").eq("id",sbUser.id).maybeSingle();
+if(!again.error&&again.data)return again.data;
+await new Promise(function(r){setTimeout(r,500)});
+again=await window.sb.from("profiles").select("*").eq("id",sbUser.id).maybeSingle();
+if(!again.error&&again.data)return again.data;
+var meta=sbUser.user_metadata||{},name=meta.full_name||meta.name||"";
+if(!name&&sbUser.email)name=String(sbUser.email).split("@")[0];
+var row={id:sbUser.id,updated_at:new Date().toISOString()};
+if(name)row.display_name=name;
+var saved=await window.sb.from("profiles").upsert(row,{onConflict:"id"}).select("*").maybeSingle();
+if(saved.error||!saved.data)return null;
+return saved.data;
+}
 async function pullCloud(){
 await ensureUser();
 if(S.uid&&S.uid!==sbUser.id){var theme=S.th;S={d:0,w:{},wm:{},pr:{},c:{},hs:[],wl:[],wa:{},sp:{},bh:[],th:theme,e:{},ml:{},mp:{}};draft={};dp=copyP({})}
 S.uid=sbUser.id;
 var remote=await fetchRemote();
+if(!remote.profile){try{remote.profile=await ensureProfile()}catch(err){remote.profile=null}}
 var hasCloud=!!(remote.profile||remote.goal||remote.settings||remote.sessions.length||remote.food.length||remote.measures.length||(remote.daily&&remote.daily.length));
 if(!hasCloud){syncNote="This account has no saved profile, workouts or meals yet.";lastCloudError="";return}
 if(remote.profile)applyProfile(remote.profile);
@@ -1343,6 +1426,8 @@ if(S.q)draft=copyQ(S.q);
 if($("app")&&!$("app").hidden&&validQ(S.q)){buildPlan(S.q);restoreOpen();draw();nd();renderShell()}
 }
 async function enterApp(){
+if(enterFlight)return enterFlight;
+var flight=(async function(){
 $("am").textContent="Loading your account…";
 try{await pullCloud()}catch(err){lastCloudError=(err&&err.message)||"Could not load your account.";if(err&&err.auth){$("am").textContent=lastCloudError;showAuth();return}}
 try{await loadLibraries()}catch(err){}
@@ -1350,6 +1435,9 @@ sv();
 if(S.p)dp=copyP(S.p);
 if(S.q)draft=copyQ(S.q);
 if(validQ(S.q))showApp();else showQuiz();
+})();
+enterFlight=flight;
+try{return await flight}finally{if(enterFlight===flight)enterFlight=null}
 }
 async function authGo(signUp){
 var email=($("ae").value||"").trim(),password=$("ap").value||"",msg=$("am");
@@ -1357,15 +1445,25 @@ msg.className="note";
 if(!window.sb){msg.textContent="Still connecting. Try again in a moment.";return}
 if(!email||!password){msg.textContent="Enter your email and password.";return}
 if(password.length<6){msg.textContent="Use at least 6 characters for the password.";return}
-$("ain").disabled=true;$("aup").disabled=true;
+setAuthBusy(true);
 msg.textContent=signUp?"Creating your account…":"Signing in…";
 var res=signUp?await window.sb.auth.signUp({email:email,password:password,options:{emailRedirectTo:location.href.split("#")[0]}}):await window.sb.auth.signInWithPassword({email:email,password:password});
-$("ain").disabled=false;$("aup").disabled=false;
+setAuthBusy(false);
 if(res.error){msg.textContent=res.error.message;return}
 if(signUp&&!(res.data&&res.data.session)){msg.textContent="Check your email and confirm the account, then sign in.";return}
 if(res.data&&res.data.session){var set=await window.sb.auth.setSession({access_token:res.data.session.access_token,refresh_token:res.data.session.refresh_token});if(set.error){msg.textContent=set.error.message;return}sbUser=res.data.session.user}
 msg.textContent="";
 await enterApp();
+}
+async function authGoogle(){
+var msg=$("am");
+msg.className="note";
+if(!window.sb){msg.textContent="Still connecting. Try again in a moment.";return}
+setAuthBusy(true);
+msg.textContent="Opening Google…";
+var res=await window.sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:authRedirect(),queryParams:{prompt:"select_account"}}});
+if(res.error){setAuthBusy(false);msg.textContent=googleAuthMessage(res.error);return}
+setTimeout(function(){if($("auth")&&!$("auth").hidden)setAuthBusy(false)},2500);
 }
 async function signOut(){
 if(window.sb)await window.sb.auth.signOut();
@@ -1378,14 +1476,30 @@ if(window.authBound)return;
 window.authBound=true;
 $("ain").onclick=function(){authGo(false)};
 $("aup").onclick=function(){authGo(true)};
+$("agoogle").onclick=function(){authGoogle()};
 $("ap").addEventListener("keydown",function(e){if(e.key==="Enter")authGo(false)});
+}
+function listenAuth(){
+if(window.authListening)return;
+window.authListening=true;
+window.sb.auth.onAuthStateChange(function(event,session){
+if(event==="TOKEN_REFRESHED"&&session&&session.user){sbUser=session.user;return}
+if(event==="SIGNED_OUT"){sbUser=null;setTimeout(function(){if(($("app")&&!$("app").hidden)||($("quiz")&&!$("quiz").hidden))showAuth()},0);return}
+if(event==="SIGNED_IN"&&session&&session.user){
+sbUser=session.user;
+setTimeout(function(){if($("auth")&&!$("auth").hidden)enterApp()},0);
+}
+});
 }
 async function startGoFit(){
 if(window.goFitStarted)return;
 window.goFitStarted=true;
 bindAuth();
+listenAuth();
+var oauthNote=readOAuthError();
 var res=await window.sb.auth.getSession();
-if(res.error||!res.data.session){$("am").textContent="Sign in with email and password. A new account needs a confirmation email before the first sign-in.";showAuth();return}
+clearAuthParams();
+if(res.error||!res.data.session){$("am").textContent=oauthNote||"Sign in with Google or email. A new email account needs a confirmation email before the first sign-in.";showAuth();return}
 sbUser=res.data.session.user;
 await enterApp();
 }

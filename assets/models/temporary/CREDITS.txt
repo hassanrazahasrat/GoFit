@@ -1,0 +1,15 @@
+Casual Character
+Author: Quaternius
+Source page: https://poly.pizza/m/kZ3DmIoGip
+Downloaded file: https://static.poly.pizza/90a9e2d4-053f-42f1-99a2-8f5e1180ea7f.glb
+Local file: casual-character.glb
+License: CC0 1.0 Universal
+https://creativecommons.org/publicdomain/zero/1.0/
+
+The file may be copied, modified, and shipped with GoFit, including in a public repository.
+
+This is a temporary low-poly rig for the viewer. It is not the final skin-covered muscular character. The clips in the file are generic motions such as idle and walk. None of them is a reviewed dumbbell lateral raise.
+
+Three.js 0.187.0 (MIT) is loaded from jsDelivr during this milestone:
+https://github.com/mrdoob/three.js/blob/master/LICENSE
+https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js

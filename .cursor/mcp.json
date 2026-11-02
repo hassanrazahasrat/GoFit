@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "blender": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "/Users/waqas/Library/Application Support/Claude/Claude Extensions/local.mcpb.blender-lab.blender",
+        "blender-mcp"
+      ]
+    }
+  }
+}

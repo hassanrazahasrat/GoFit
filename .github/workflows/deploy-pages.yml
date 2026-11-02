@@ -29,6 +29,7 @@ jobs:
           set -euo pipefail
           mkdir -p _site/icons
           cp index.html manifest.webmanifest sw.js googleda1dfbfc053a670e.html _site/
+          cp -R js assets _site/
           cp icons/icon-192.png icons/icon-512.png icons/maskable-512.png icons/apple-touch-icon.png icons/favicon-32.png _site/icons/
 
       - name: Setup Pages
