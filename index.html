@@ -616,7 +616,7 @@ function releaseTrainDemo(){trainDemoToken++;if(trainDemo){trainDemo.dispose();t
 function mountTrainDemo(){
 var host=$("demo3d");if(!host||trainDemo)return;
 var key=host.dataset.demo,name=host.dataset.name||"",token=++trainDemoToken;
-import("./js/exercises/registry.js").then(function(mod){
+import("./js/exercises/registry.js?v=bench4").then(function(mod){
 var live=$("demo3d");
 if(token!==trainDemoToken||!live||live.dataset.demo!==key||(live.dataset.name||"")!==name)return;
 var spec=mod.exerciseDemo(key,name);
@@ -902,7 +902,7 @@ VL={rfly:"Back view",row:"Back view",prony:"Back view",fly:"Arm path"},
 PF={pullup:'<path d="M26 8H74"/>',pdown:'<path d="M26 8H74"/>'},HO={};
 var HW={
 press:["Lie on the bench or floor with your feet planted and your shoulder blades pulled together.","Lower the weight to the middle of your chest, elbows about 45° from your body.","Press back up until your arms are straight. Do not bounce off your chest."],
-ohp:["Sit or stand tall with the weights at shoulder height and your core tight.","Press straight up until your arms are nearly straight, without leaning back.","Lower slowly back to shoulder height."],
+ohp:["Sit tall with the dumbbells at ear level and elbows tucked about 45° forward, not flared out.","Press straight up, stacking wrists over elbows over shoulders, without leaning back.","Lower slowly with control back to ear level."],
 dips:["Hold the bars with straight arms and lean slightly forward.","Lower until your elbows reach about 90°.","Press up until your arms are straight again."],
 lat:["Stand tall with a weight in each hand by your sides and a soft bend in your elbows.","Raise your arms out to the sides, not in front, up to shoulder height. Think of pouring a jug with your little fingers up.","Lower slowly for about 2 seconds. Do not swing your body."],
 push:["Stand with your elbows pinned to your sides, holding the rope or bar at chest height.","Press down until your arms are straight, keeping your elbows still.","Let it rise slowly until your forearms are just past parallel."],

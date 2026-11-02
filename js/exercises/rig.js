@@ -42,6 +42,23 @@ function mix(from, to, u) {
   };
 }
 
+function mixArmPose(from, to, u) {
+  function lerp(a, b) {
+    let d = (b || 0) - (a || 0);
+    while (d > 180) d -= 360;
+    while (d < -180) d += 360;
+    return (a || 0) + d * u;
+  }
+  return {
+    ux: lerp(from.ux, to.ux),
+    uy: lerp(from.uy, to.uy),
+    uz: lerp(from.uz, to.uz),
+    lx: lerp(from.lx, to.lx),
+    ly: lerp(from.ly, to.ly),
+    lz: lerp(from.lz, to.lz)
+  };
+}
+
 function amount(t) {
   if (t <= TIMING.raise) return (1 - Math.cos(Math.PI * (t / TIMING.raise))) / 2;
   if (t <= TIMING.hold) return 1;
@@ -117,16 +134,11 @@ export function buildPoseClip(root, spec) {
   const rightLowerValues = [];
   const otherValues = others.map(function () { return []; });
   let solved = null;
-  let prevLy = null;
+  let prevSolved = null;
   const steps = 52;
   const lockTwist = !!spec.lockTwist;
-  const searchKeys = ARM_KEYS;
-  const leftAxisX = new THREE.Vector3();
-  const leftAxisZ = new THREE.Vector3();
-  const rightAxisX = new THREE.Vector3();
-  const rightAxisZ = new THREE.Vector3();
-  const leftWristQ = new THREE.Quaternion();
-  const rightWristQ = new THREE.Quaternion();
+  const eulerPath = !!spec.eulerPath || lockTwist;
+  const searchKeys = lockTwist ? ARM_KEYS_LOCK : ARM_KEYS;
   function score(pose) {
     upperR.quaternion.copy(restUR).multiply(deltaQuat({ x: pose.ux, y: pose.uy, z: pose.uz }));
     lowerR.quaternion.copy(restLR).multiply(deltaQuat({ x: pose.lx, y: pose.ly, z: pose.lz }));
@@ -135,23 +147,21 @@ export function buildPoseClip(root, spec) {
     wristR.getWorldPosition(wristRP);
     return elbowR.distanceTo(elbowT) + wristRP.distanceTo(wristT);
   }
-  function scoreOrient(pose) {
-    const base = score(pose);
-    wristR.getWorldQuaternion(rightWristQ);
-    rightAxisX.set(1, 0, 0).applyQuaternion(rightWristQ);
-    rightAxisZ.set(0, 0, 1).applyQuaternion(rightWristQ);
-    return base * 1.6
-      + (1 - THREE.MathUtils.clamp(rightAxisX.dot(leftAxisX), -1, 1)) * 0.5
-      + (1 - THREE.MathUtils.clamp(rightAxisZ.dot(leftAxisZ), -1, 1)) * 0.6;
+  function clampToward(prev, next, limit) {
+    const out = Object.assign({}, next);
+    if (!prev) return out;
+    ["ux", "uy", "uz", "lx", "ly", "lz"].forEach(function (key) {
+      let d = out[key] - prev[key];
+      while (d > 180) d -= 360;
+      while (d < -180) d += 360;
+      if (Math.abs(d) > limit) out[key] = prev[key] + Math.sign(d) * limit;
+      else out[key] = prev[key] + d;
+    });
+    return out;
   }
-  for (let i = 0; i <= steps; i += 1) {
-    const t = TIMING.duration * i / steps;
-    const u = amount(t);
-    times.push(t);
-    const upperQ = leftUpperStart.clone().slerp(leftUpperPeak, u);
-    const lowerQ = leftLowerStart.clone().slerp(leftLowerPeak, u);
-    upperL.quaternion.copy(upperQ);
-    lowerL.quaternion.copy(lowerQ);
+  function solveRight(leftUpper, leftLower) {
+    upperL.quaternion.copy(restUL).multiply(deltaQuat(leftUpper));
+    lowerL.quaternion.copy(restLL).multiply(deltaQuat(leftLower));
     root.updateMatrixWorld(true);
     lowerL.getWorldPosition(elbowL);
     wristL.getWorldPosition(wristLP);
@@ -159,71 +169,131 @@ export function buildPoseClip(root, spec) {
     wristT.copy(wristLP);
     elbowT.x = centerX * 2 - elbowT.x;
     wristT.x = centerX * 2 - wristT.x;
-    if (lockTwist) {
-      wristL.getWorldQuaternion(leftWristQ);
-      leftAxisX.set(1, 0, 0).applyQuaternion(leftWristQ);
-      leftAxisZ.set(0, 0, 1).applyQuaternion(leftWristQ);
-      leftAxisX.x *= -1;
-      leftAxisZ.x *= -1;
-    }
-    const leftUpper = mix(start.UpperArmL || {}, peak.UpperArmL || {}, u);
-    const leftLower = mix(start.LowerArmL || {}, peak.LowerArmL || {}, u);
     const twist = -(leftLower.y || 0);
     const upperTwist = -(leftUpper.y || 0);
-    let guess = solved ? Object.assign({}, solved, { ly: twist, uy: lockTwist ? upperTwist : solved.uy }) : {
-      ux: leftUpper.x || 0,
-      uz: -(leftUpper.z || 0),
-      uy: upperTwist,
-      lz: -(leftLower.z || 0),
-      lx: -(leftLower.x || 0),
-      ly: twist
-    };
-    if (!solved) {
-      const seeds = [
-        guess,
-        { ux: leftUpper.x || 0, uz: leftUpper.z || 0, uy: upperTwist, lz: leftLower.z || 0, lx: leftLower.x || 0, ly: twist },
-        { ux: -(leftUpper.x || 0), uz: -(leftUpper.z || 0), uy: leftUpper.y || 0, lz: -(leftLower.z || 0), lx: leftLower.x || 0, ly: twist }
-      ];
-      let bestSeed = seeds[0];
-      let bestError = Infinity;
-      seeds.forEach(function (seed) {
-        const error = score(seed);
-        if (error < bestError) {
-          bestError = error;
-          bestSeed = seed;
-        }
-      });
-      guess = refineArm(bestSeed, score, [24, 12, 6, 3, 1], 4, searchKeys).pose;
-    }
-    let refined = refineArm(guess, score, solved ? [8, 3, 1] : [6, 2], solved ? 2 : 3, searchKeys);
+    const seeds = [
+      {
+        ux: leftUpper.x || 0,
+        uz: -(leftUpper.z || 0),
+        uy: upperTwist,
+        lz: -(leftLower.z || 0),
+        lx: -(leftLower.x || 0),
+        ly: twist
+      },
+      {
+        ux: leftUpper.x || 0,
+        uz: leftUpper.z || 0,
+        uy: upperTwist,
+        lz: leftLower.z || 0,
+        lx: leftLower.x || 0,
+        ly: twist
+      },
+      {
+        ux: -(leftUpper.x || 0),
+        uz: -(leftUpper.z || 0),
+        uy: leftUpper.y || 0,
+        lz: -(leftLower.z || 0),
+        lx: leftLower.x || 0,
+        ly: twist
+      }
+    ];
+    let bestSeed = seeds[0];
+    let bestError = Infinity;
+    seeds.forEach(function (seed) {
+      const error = score(seed);
+      if (error < bestError) {
+        bestError = error;
+        bestSeed = seed;
+      }
+    });
+    let refined = refineArm(bestSeed, score, [24, 12, 6, 3, 1], 4, searchKeys);
     if (refined.error > 0.02) {
       const wide = refineArm(refined.pose, score, [28, 14, 7, 3, 1], 3, searchKeys);
       if (wide.error < refined.error) refined = wide;
     }
-    solved = refined.pose;
-    solved.ly = twist;
-    solved.uy = lockTwist ? upperTwist : solved.uy;
+    const pose = refined.pose;
+    pose.ly = twist;
+    if (lockTwist) pose.uy = upperTwist;
+    return pose;
+  }
+
+  // For lockTwist presses, IK only at the endpoints then euler-mix.
+  // Per-frame IK was the source of visible hand vibration.
+  let rightStart = null;
+  let rightPeak = null;
+  if (lockTwist) {
+    rightStart = solveRight(start.UpperArmL || {}, start.LowerArmL || {});
+    rightPeak = solveRight(peak.UpperArmL || {}, peak.LowerArmL || {});
+  }
+
+  for (let i = 0; i <= steps; i += 1) {
+    const t = TIMING.duration * i / steps;
+    const u = amount(t);
+    times.push(t);
+    const leftUpper = mix(start.UpperArmL || {}, peak.UpperArmL || {}, u);
+    const leftLower = mix(start.LowerArmL || {}, peak.LowerArmL || {}, u);
+    const upperQ = eulerPath
+      ? restUL.clone().multiply(deltaQuat(leftUpper))
+      : leftUpperStart.clone().slerp(leftUpperPeak, u);
+    const lowerQ = eulerPath
+      ? restLL.clone().multiply(deltaQuat(leftLower))
+      : leftLowerStart.clone().slerp(leftLowerPeak, u);
+    upperL.quaternion.copy(upperQ);
+    lowerL.quaternion.copy(lowerQ);
     if (lockTwist) {
-      const ly0 = prevLy == null ? twist : prevLy;
-      const twistSeeds = [
-        Object.assign({}, solved, { ly: ly0 }),
-        Object.assign({}, solved, { ly: ly0 + 20 }),
-        Object.assign({}, solved, { ly: ly0 - 20 })
-      ];
-      let bestTwist = { pose: Object.assign({}, solved, { ly: ly0 }), error: scoreOrient(Object.assign({}, solved, { ly: ly0 })) };
-      twistSeeds.forEach(function (seed) {
-        const trial = refineArm(seed, scoreOrient, [12, 6, 3, 1], 3, ["ly"]);
-        if (trial.error + 1e-5 < bestTwist.error && score(trial.pose) < 0.04) bestTwist = trial;
-      });
-      solved = bestTwist.pose;
-      let dLy = solved.ly - ly0;
-      while (dLy > 180) { solved.ly -= 360; dLy -= 360; }
-      while (dLy < -180) { solved.ly += 360; dLy += 360; }
-      if (Math.abs(solved.ly - ly0) > 35) solved.ly = ly0 + Math.sign(solved.ly - ly0) * 35;
-      prevLy = solved.ly;
+      const rightPose = mixArmPose(rightStart, rightPeak, u);
+      rightPose.ly = -(leftLower.y || 0);
+      rightPose.uy = -(leftUpper.y || 0);
+      upperR.quaternion.copy(restUR).multiply(deltaQuat({ x: rightPose.ux, y: rightPose.uy, z: rightPose.uz }));
+      lowerR.quaternion.copy(restLR).multiply(deltaQuat({ x: rightPose.lx, y: rightPose.ly, z: rightPose.lz }));
+    } else {
+      root.updateMatrixWorld(true);
+      lowerL.getWorldPosition(elbowL);
+      wristL.getWorldPosition(wristLP);
+      elbowT.copy(elbowL);
+      wristT.copy(wristLP);
+      elbowT.x = centerX * 2 - elbowT.x;
+      wristT.x = centerX * 2 - wristT.x;
+      const twist = -(leftLower.y || 0);
+      const upperTwist = -(leftUpper.y || 0);
+      let guess = solved ? Object.assign({}, solved, { ly: twist }) : {
+        ux: leftUpper.x || 0,
+        uz: -(leftUpper.z || 0),
+        uy: upperTwist,
+        lz: -(leftLower.z || 0),
+        lx: -(leftLower.x || 0),
+        ly: twist
+      };
+      if (!solved) {
+        const seeds = [
+          guess,
+          { ux: leftUpper.x || 0, uz: leftUpper.z || 0, uy: upperTwist, lz: leftLower.z || 0, lx: leftLower.x || 0, ly: twist },
+          { ux: -(leftUpper.x || 0), uz: -(leftUpper.z || 0), uy: leftUpper.y || 0, lz: -(leftLower.z || 0), lx: leftLower.x || 0, ly: twist }
+        ];
+        let bestSeed = seeds[0];
+        let bestError = Infinity;
+        seeds.forEach(function (seed) {
+          const error = score(seed);
+          if (error < bestError) {
+            bestError = error;
+            bestSeed = seed;
+          }
+        });
+        guess = refineArm(bestSeed, score, [24, 12, 6, 3, 1], 4, searchKeys).pose;
+      }
+      let refined = refineArm(guess, score, solved ? [8, 3, 1] : [6, 2], solved ? 2 : 3, searchKeys);
+      if (refined.error > 0.02) {
+        const wide = refineArm(refined.pose, score, [28, 14, 7, 3, 1], 3, searchKeys);
+        if (wide.error < refined.error) refined = wide;
+      }
+      solved = refined.pose;
+      solved.ly = twist;
+      solved = clampToward(prevSolved, solved, 40);
+      solved.ly = twist;
+      prevSolved = Object.assign({}, solved);
+      upperR.quaternion.copy(restUR).multiply(deltaQuat({ x: solved.ux, y: solved.uy, z: solved.uz }));
+      lowerR.quaternion.copy(restLR).multiply(deltaQuat({ x: solved.lx, y: solved.ly, z: solved.lz }));
     }
-    upperR.quaternion.copy(restUR).multiply(deltaQuat({ x: solved.ux, y: solved.uy, z: solved.uz }));
-    lowerR.quaternion.copy(restLR).multiply(deltaQuat({ x: solved.lx, y: solved.ly, z: solved.lz }));
     pushQuat(leftUpperValues, upperQ);
     pushQuat(leftLowerValues, lowerQ);
     pushQuat(rightUpperValues, upperR.quaternion);
@@ -267,6 +337,19 @@ export function closeHands(root) {
     bend(root, "Thumb1." + side, -0.35, side === "L" ? -0.45 : 0.45);
     bend(root, "Thumb2." + side, -0.4, 0);
     bend(root, "Thumb3." + side, -0.25, 0);
+  });
+}
+
+export function gripBar(root) {
+  ["L", "R"].forEach(function (side) {
+    ["Index", "Middle", "Ring", "Pinky"].forEach(function (finger) {
+      bend(root, finger + "1." + side, -0.7, 0);
+      bend(root, finger + "2." + side, -1.05, 0);
+      bend(root, finger + "3." + side, -0.65, 0);
+    });
+    bend(root, "Thumb1." + side, -0.5, side === "L" ? -0.6 : 0.6);
+    bend(root, "Thumb2." + side, -0.65, 0);
+    bend(root, "Thumb3." + side, -0.4, 0);
   });
 }
 
@@ -329,13 +412,26 @@ function chainGear(root, fn) {
 }
 
 export function attachBar(root) {
-  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 1, 16), metalMaterial());
-  shade(bar);
-  root.add(bar);
+  const material = metalMaterial();
+  const group = new THREE.Group();
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 1, 16), material);
+  function makePlate(radius, thick) {
+    return new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, thick, 28), material);
+  }
+  const plates = [
+    makePlate(0.15, 0.042),
+    makePlate(0.12, 0.034),
+    makePlate(0.15, 0.042),
+    makePlate(0.12, 0.034)
+  ];
+  group.add(shaft);
+  plates.forEach(function (plate) { group.add(plate); });
+  shade(group);
+  root.add(group);
   const leftBone = findBone(root, "WristL");
   const rightBone = findBone(root, "WristR");
-  const leftPalm = new THREE.Vector3(0.00036, 0.00095, -0.0004);
-  const rightPalm = new THREE.Vector3(-0.0002, 0.00095, -0.0004);
+  const leftPalm = new THREE.Vector3(0.0003, 0.0007, -0.00035);
+  const rightPalm = new THREE.Vector3(-0.0003, 0.0007, -0.00035);
   const left = new THREE.Vector3();
   const right = new THREE.Vector3();
   const dir = new THREE.Vector3();
@@ -346,14 +442,21 @@ export function attachBar(root) {
     mid.copy(left).add(right).multiplyScalar(0.5);
     dir.set(right.x - left.x, 0, 0);
     if (Math.abs(dir.x) < 0.04) dir.x = dir.x < 0 ? -0.04 : 0.04;
-    const length = Math.abs(right.x - left.x);
+    const grip = Math.abs(right.x - left.x);
+    const length = grip + 0.9;
     dir.normalize();
-    bar.position.set(mid.x, (left.y + right.y) * 0.5, (left.z + right.z) * 0.5);
-    root.worldToLocal(bar.position);
+    // Sit the shaft deep in the palms.
+    group.position.set(mid.x, mid.y - 0.028, mid.z);
+    root.worldToLocal(group.position);
     const worldQ = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
     const parentQ = root.getWorldQuaternion(new THREE.Quaternion());
-    bar.quaternion.copy(parentQ.invert()).multiply(worldQ);
-    bar.scale.set(1, length + 0.36, 1);
+    group.quaternion.copy(parentQ.invert()).multiply(worldQ);
+    shaft.scale.set(1, length, 1);
+    const tip = length * 0.5 - 0.03;
+    plates[0].position.set(0, -tip, 0);
+    plates[1].position.set(0, -tip + 0.048, 0);
+    plates[2].position.set(0, tip, 0);
+    plates[3].position.set(0, tip - 0.048, 0);
   });
 }
 
@@ -393,8 +496,8 @@ export function attachFlatBench(root) {
 
 export function attachSeat(root) {
   const material = benchMaterial();
-  const seatY = 0.83;
-  const postBottom = 0.22;
+  const seatY = 0.78;
+  const postBottom = 0.34;
   const seat = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.07, 0.34), material);
   seat.position.set(0, seatY, 0.06);
   shade(seat);
@@ -440,9 +543,7 @@ export function plantHands(root) {
   });
 }
 
-export function trackFeet(root, mode) {
-  bindFeet(root);
-  if (mode !== "plant") return;
+function orientFeetFlat(root) {
   const down = new THREE.Vector3(0, -1, 0);
   const ahead = new THREE.Vector3();
   const xAxis = new THREE.Vector3();
@@ -450,21 +551,91 @@ export function trackFeet(root, mode) {
   const basis = new THREE.Matrix4();
   const target = new THREE.Quaternion();
   const parentQ = new THREE.Quaternion();
-  chainGear(root, function () {
-    ["L", "R"].forEach(function (side) {
-      const foot = findBone(root, "Foot" + side);
-      const parent = foot.parent;
-      parent.updateMatrixWorld(true);
-      ahead.set(0, 0, 1);
-      xAxis.crossVectors(ahead, down);
-      if (xAxis.lengthSq() < 1e-6) xAxis.set(side === "L" ? 1 : -1, 0, 0);
-      xAxis.normalize();
-      yAxis.crossVectors(down, xAxis).normalize();
-      target.setFromRotationMatrix(basis.makeBasis(xAxis, yAxis, down));
-      foot.quaternion.copy(parent.getWorldQuaternion(parentQ).invert()).multiply(target);
-      foot.updateMatrixWorld(true);
-    });
+  ["L", "R"].forEach(function (side) {
+    const foot = findBone(root, "Foot" + side);
+    const parent = foot.parent;
+    parent.updateMatrixWorld(true);
+    ahead.set(0, 0, 1);
+    xAxis.crossVectors(ahead, down);
+    if (xAxis.lengthSq() < 1e-6) xAxis.set(side === "L" ? 1 : -1, 0, 0);
+    xAxis.normalize();
+    yAxis.crossVectors(down, xAxis).normalize();
+    target.setFromRotationMatrix(basis.makeBasis(xAxis, yAxis, down));
+    foot.quaternion.copy(parent.getWorldQuaternion(parentQ).invert()).multiply(target);
+    foot.updateMatrixWorld(true);
   });
+}
+
+export function trackFeet(root, mode) {
+  bindFeet(root);
+  if (mode !== "plant") return;
+  chainGear(root, function () {
+    orientFeetFlat(root);
+  });
+}
+
+// Mirror the left leg pose onto the right in world space so both feet plant
+// at the same height despite asymmetric bind eulers on this character.
+export function mirrorLegs(root) {
+  bindFeet(root);
+  root.updateMatrixWorld(true);
+  const upperR = findBone(root, "UpperLegR");
+  const lowerR = findBone(root, "LowerLegR");
+  const restUR = upperR.quaternion.clone();
+  const restLR = lowerR.quaternion.clone();
+  const centerX = findBone(root, "Hips").getWorldPosition(new THREE.Vector3()).x;
+  const kneeL = findBone(root, "LowerLegL").getWorldPosition(new THREE.Vector3());
+  const footL = findBone(root, "FootL").getWorldPosition(new THREE.Vector3());
+  const kneeT = new THREE.Vector3(centerX * 2 - kneeL.x, kneeL.y, kneeL.z);
+  const footT = new THREE.Vector3(centerX * 2 - footL.x, footL.y, footL.z);
+  const kneeR = new THREE.Vector3();
+  const footR = new THREE.Vector3();
+  function score(pose) {
+    upperR.quaternion.copy(restUR).multiply(deltaQuat({ x: pose.ux, y: pose.uy, z: pose.uz }));
+    lowerR.quaternion.copy(restLR).multiply(deltaQuat({ x: pose.lx, y: pose.ly, z: pose.lz }));
+    orientFeetFlat(root);
+    root.updateMatrixWorld(true);
+    findBone(root, "LowerLegR").getWorldPosition(kneeR);
+    findBone(root, "FootR").getWorldPosition(footR);
+    return kneeR.distanceTo(kneeT) + footR.distanceTo(footT);
+  }
+  let best = { ux: -58, uy: -56, uz: 60, lx: 0, ly: 0, lz: -30 };
+  let bestE = score(best);
+  const seeds = [
+    best,
+    { ux: -60, uy: -60, uz: 60, lx: 20, ly: 0, lz: -40 },
+    { ux: -50, uy: -20, uz: 20, lx: -20, ly: 0, lz: -60 },
+    { ux: -80, uy: -40, uz: 80, lx: 30, ly: 0, lz: -20 },
+    { ux: -40, uy: -50, uz: 50, lx: 10, ly: 0, lz: -50 },
+    { ux: -70, uy: -30, uz: 40, lx: 24, ly: 0, lz: -40 }
+  ];
+  seeds.forEach(function (seed) {
+    const err = score(seed);
+    if (err < bestE) {
+      bestE = err;
+      best = Object.assign({}, seed);
+    }
+  });
+  const keys = ["ux", "uy", "uz", "lx", "lz"];
+  [16, 8, 4, 2, 1].forEach(function (step) {
+    for (let pass = 0; pass < 10; pass += 1) {
+      keys.forEach(function (key) {
+        [-1, 1].forEach(function (dir) {
+          const trial = Object.assign({}, best);
+          trial[key] += dir * step;
+          const err = score(trial);
+          if (err + 1e-6 < bestE) {
+            bestE = err;
+            best = trial;
+          }
+        });
+      });
+    }
+  });
+  upperR.quaternion.copy(restUR).multiply(deltaQuat({ x: best.ux, y: best.uy, z: best.uz }));
+  lowerR.quaternion.copy(restLR).multiply(deltaQuat({ x: best.lx, y: best.ly, z: best.lz }));
+  orientFeetFlat(root);
+  root.updateMatrixWorld(true);
 }
 
 export function plantWrists(root, mode) {

@@ -1,5 +1,5 @@
 import { prepareLateralRaise, LATERAL_RAISE_CLIP, LATERAL_RAISE_CUES, LATERAL_RAISE_MUSCLES } from "./lateral-raise.js";
-import { applyStill, buildPoseClip, closeHands, plantHands, attachDumbbells, attachHandles, attachBar, attachBench, attachFlatBench, attachSeat, bindFeet, trackFeet, plantWrists, placeBars } from "./rig.js";
+import { applyStill, buildPoseClip, closeHands, gripBar, plantHands, attachDumbbells, attachHandles, attachBar, attachBench, attachFlatBench, attachSeat, bindFeet, trackFeet, mirrorLegs, plantWrists, placeBars } from "./rig.js";
 
 const CHEST = {
   primary: ["pectoralis"],
@@ -68,6 +68,7 @@ function motion(def) {
       const root = gltf.scene;
       if (def.feet || def.plant === "floor" || def.orient) bindFeet(root);
       if (def.still) applyStill(root, def.still);
+      if (def.mirrorLegs) mirrorLegs(root);
       if (def.feet) trackFeet(root, def.feet === true ? "plant" : def.feet);
       gltf.animations.push(buildPoseClip(root, {
         clip: def.clip,
@@ -76,6 +77,7 @@ function motion(def) {
         lockTwist: !!def.lockTwist
       }));
       if (def.grip === "plant") plantHands(root);
+      else if (def.grip === "bar") gripBar(root);
       else if (def.grip !== false) closeHands(root);
       if (def.gear === "dumbbell") attachDumbbells(root);
       if (def.gear === "handle") attachHandles(root);
@@ -123,20 +125,31 @@ function benchMotion(name, incline) {
     return motion({
       clip: "bench-press",
       gear: "bar",
+      grip: "bar",
       bench: "flat",
       feet: true,
+      mirrorLegs: true,
+      lockTwist: true,
       orient: -90,
       view: "bench3",
       muscles: CHEST,
       still: {
-        UpperLegL: { x: 20, z: 20 },
-        LowerLegL: { z: -30 },
-        UpperLegR: { x: -20, z: 30 },
-        LowerLegR: { z: -15 }
+        UpperLegL: { x: -40, y: -20, z: 5 },
+        LowerLegL: { x: 24, z: -40 }
       },
-      start: { UpperArmL: { x: -40, y: 20, z: -105 }, LowerArmL: { z: 10, x: 40 } },
-      peak: { UpperArmL: { x: 40, y: -20 }, LowerArmL: { z: -65, x: -20 } },
-      cues: cues("Lie flat. Bar over the shoulders, feet planted.", "Lower the bar to the mid-chest.", "Elbows near 90°, about 45° from your sides.", "Press up and slightly back over the shoulders.")
+      start: {
+        UpperArmL: { x: -80, y: -19, z: -110 },
+        LowerArmL: { z: 11 },
+        WristL: { x: 18, y: -25 },
+        WristR: { x: 18, y: 25 }
+      },
+      peak: {
+        UpperArmL: { x: 30, y: -30, z: -10 },
+        LowerArmL: { z: -60, x: -30 },
+        WristL: { x: 18, y: -25 },
+        WristR: { x: 18, y: 25 }
+      },
+      cues: cues("Lie flat. Bar over the chest, feet planted.", "Lower the bar to mid-chest with elbows about 45°.", "Forearms vertical. Wrists stacked over elbows.", "Press up until the arms are straight. Soft lockout.")
     });
   }
   return motion({
@@ -193,27 +206,27 @@ function shoulderMotion(name) {
     lockTwist: true,
     feet: !standing,
     bench: standing ? false : "seat",
-    drop: standing ? 0 : 0.20,
+    drop: standing ? 0 : 0.34,
     view: "press3",
     still: standing ? null : {
-      UpperLegL: { x: -45, z: 4 },
-      LowerLegL: { z: 75 },
-      UpperLegR: { x: -40, z: 15, y: 65 },
-      LowerLegR: { z: 25, x: 45 }
+      UpperLegL: { x: 55, z: 55, y: -30 },
+      LowerLegL: { z: -80, x: 40 },
+      UpperLegR: { x: -40, z: -40, y: -60 },
+      LowerLegR: { z: -80, x: -80 }
     },
     start: {
-      UpperArmL: { x: 70, y: -90, z: -40 },
-      LowerArmL: { z: -90, y: -150 },
+      UpperArmL: { x: 55, y: -85, z: -50 },
+      LowerArmL: { z: -65, x: -20, y: 30 },
       WristL: { x: 40 },
       WristR: { x: 40 }
     },
     peak: {
-      UpperArmL: { x: 140, y: -90, z: 0 },
-      LowerArmL: { z: 15, y: -150 },
+      UpperArmL: { x: 155, y: -85, z: 25 },
+      LowerArmL: { z: 20, x: 10, y: 30 },
       WristL: { x: 40 },
       WristR: { x: 40 }
     },
-    cues: cues("Sit tall. Dumbbells at the shoulders, palms forward.", "Press both bells up over the shoulders.", "Arms extended overhead, ribs down.", "Lower them back to shoulder height.")
+    cues: cues("Sit tall. Dumbbells at ear level, elbows tucked about 45°.", "Press straight up. Keep wrists stacked over elbows.", "Arms extended overhead, ribs down.", "Lower with control back to ear level.")
   });
 }
 

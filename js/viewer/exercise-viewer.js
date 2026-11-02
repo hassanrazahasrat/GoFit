@@ -80,11 +80,12 @@ function frameExercise(model, camera, controls, view) {
   if (view === "high") camera.position.set(center.x + span * 0.15, center.y + span * 0.95, center.z + span * 0.85);
   else if (view === "three") camera.position.set(center.x + span * 0.95, center.y + span * 0.78, center.z + span * 0.2);
   else if (view === "bench3") {
-    camera.position.set(center.x + span * 1.15, center.y + span * 0.42, center.z - span * 0.02);
-    controls.target.set(center.x, center.y + span * 0.02, center.z - span * 0.06);
+    // From the foot end, slightly elevated — both legs and arms read side-by-side.
+    camera.position.set(center.x + span * 0.15, center.y + span * 1.05, center.z + span * 1.55);
+    controls.target.set(center.x, center.y + span * 0.15, center.z - span * 0.15);
   }
   else if (view === "press3") {
-    camera.position.set(center.x + span * 0.72, center.y + span * 0.38, center.z + span * 1.35);
+    camera.position.set(center.x + span * 0.18, center.y + span * 0.42, center.z + span * 1.55);
     controls.target.set(center.x, center.y + span * 0.22, center.z + span * 0.02);
   }
   else camera.position.set(center.x + span * 1.2, center.y + span * 0.42, center.z + span * 0.35);
