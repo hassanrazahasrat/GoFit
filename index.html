@@ -18,9 +18,6 @@ gtag("config","G-GL3YFWTKK7");
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="Your personalised gym plan with exercise demos, calories, meals and progress tracking.">
 <title>Your gym plan</title>
-<script type="importmap">
-{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/"}}
-</script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 window.sb = createClient(
@@ -626,7 +623,7 @@ function releaseTrainDemo(){trainDemoToken++;if(trainDemo){trainDemo.dispose();t
 function mountTrainDemo(){
 var host=$("demo3d");if(!host||trainDemo)return;
 var key=host.dataset.demo,name=host.dataset.name||"",token=++trainDemoToken;
-import("./js/exercises/registry.js?v=core10").then(function(mod){
+import("./js/exercises/registry.js?v=core13").then(function(mod){
 var live=$("demo3d");
 if(token!==trainDemoToken||!live||live.dataset.demo!==key||(live.dataset.name||"")!==name)return;
 var spec=mod.exerciseDemo(key,name);

@@ -214,3 +214,19 @@ export const DECLINE_PUSH_UP_ANATOMY = buildPushUp({
   ],
   view: { tg: [0, 52, 64], span: 285 }
 });
+
+export const CLOSE_PUSH_UP_ANATOMY = buildPushUp({
+  label: "3D close push-up demonstration",
+  handX: 14,
+  flare: 0.5,
+  reachBottom: 36,
+  role: { tric: 0, pec: 0, adelt: 1, abs: 1 },
+  muscles: [["tric", "Triceps", 0], ["pec", "Inner chest", 0], ["adelt", "Front delts", 1], ["abs", "Core", 1]],
+  cues: [
+    "Place your hands directly under your shoulders, closer than a standard push-up, and make a straight line from your head to your heels.",
+    "Lower your chest toward the floor with your elbows brushing your sides. Keep your hips level and your core braced.",
+    "Stop with your chest just above the floor and your elbows close to your ribs. Do not let your hips sag.",
+    "Press the floor away and squeeze your triceps until your arms are straight."
+  ],
+  view: { tg: [0, 48, 64], span: 275 }
+});

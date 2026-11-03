@@ -6,8 +6,6 @@ const UT = [0, 1, 0];
 const P = [0, 56, 0];
 const SC = add(P, [0, 2.5, -44]);
 const SHOULDER_X = 22;
-const TOP_X = 18;
-const BOT_X = 31;
 const TOP_Y = SC[1] + 54.5;
 const BOT_Y = 69;
 const BOT_Z = -34;
@@ -24,85 +22,96 @@ function pressPhase(t) {
   return { u: 0, p: 0 };
 }
 
-function pressPose(u) {
-  const o = [];
-  function T(d, from, to, up, col) { o.push({ d: d, A: from, B: to, u: up, col: col || "musc" }); }
-  const sg = [1, -1];
-  T(TORSO, add(P, mul(A, -10)), add(P, mul(A, 50)), UT);
-  const NB = add(P, mul(A, 50));
-  T(NECK, add(NB, mul(A, -2)), add(NB, mul(A, 7)), UT);
-  T(HEAD, add(NB, mul(A, 5)), add(NB, mul(A, 25)), UT, "head");
-  const top = [TOP_X, TOP_Y, SC[2] - 1];
-  const low = [BOT_X, BOT_Y, BOT_Z];
-  const c = lv(top, low, u);
-  o.E = [];
-  o.grips = [];
-  for (let i = 0; i < 2; i++) {
-    const s = sg[i];
-    const S = add(SC, [s * SHOULDER_X, 0, 0]);
-    const W = [s * c[0], c[1], c[2]];
-    const r = ik(S, W, 30, 26, [s * 0.4, -1, 0.5]);
-    o.E[i] = r.E;
-    o.grips[i] = r.W;
-    T(UARM, S, r.E, mul(r.pole, -1));
-    T(FARM, r.E, r.W, mul(r.pole, -1));
-    T(ELB, add(r.E, [0, -4.2, 0]), add(r.E, [0, 4.2, 0]), [0, 0, 1], "tend");
-    T(WRI, add(r.W, [0, -3, 0]), add(r.W, [0, 3, 0]), [0, 0, 1], "tend");
-    T(HAND, add(r.W, [-3.9, 0, 0]), add(r.W, [3.9, 0, 0]), [0, 0, 1], "tend");
-    T(BAR, add(r.W, [-7.5, 0, 0]), add(r.W, [7.5, 0, 0]), [0, 1, 0], "bar");
-    T(DB_HEAD, add(r.W, [7.5, 0, 0]), add(r.W, [14, 0, 0]), [0, 1, 0], "rig");
-    T(DB_HEAD, add(r.W, [-14, 0, 0]), add(r.W, [-7.5, 0, 0]), [0, 1, 0], "rig");
+function buildDbBenchPress(cfg) {
+  function pressPose(u) {
+    const o = [];
+    function T(d, from, to, up, col) { o.push({ d: d, A: from, B: to, u: up, col: col || "musc" }); }
+    const sg = [1, -1];
+    T(TORSO, add(P, mul(A, -10)), add(P, mul(A, 50)), UT);
+    const NB = add(P, mul(A, 50));
+    T(NECK, add(NB, mul(A, -2)), add(NB, mul(A, 7)), UT);
+    T(HEAD, add(NB, mul(A, 5)), add(NB, mul(A, 25)), UT, "head");
+    const top = [cfg.topX, TOP_Y, SC[2] - 1];
+    const low = [cfg.botX, BOT_Y, BOT_Z];
+    const c = lv(top, low, u);
+    o.E = [];
+    o.grips = [];
+    for (let i = 0; i < 2; i++) {
+      const s = sg[i];
+      const S = add(SC, [s * SHOULDER_X, 0, 0]);
+      const W = [s * c[0], c[1], c[2]];
+      const r = ik(S, W, 30, 26, [s * cfg.pole, -1, 0.5]);
+      o.E[i] = r.E;
+      o.grips[i] = r.W;
+      T(UARM, S, r.E, mul(r.pole, -1));
+      T(FARM, r.E, r.W, mul(r.pole, -1));
+      T(ELB, add(r.E, [0, -4.2, 0]), add(r.E, [0, 4.2, 0]), [0, 0, 1], "tend");
+      T(WRI, add(r.W, [0, -3, 0]), add(r.W, [0, 3, 0]), [0, 0, 1], "tend");
+      T(HAND, add(r.W, [-3.9, 0, 0]), add(r.W, [3.9, 0, 0]), [0, 0, 1], "tend");
+      T(BAR, add(r.W, [-7.5, 0, 0]), add(r.W, [7.5, 0, 0]), [0, 1, 0], "bar");
+      T(DB_HEAD, add(r.W, [7.5, 0, 0]), add(r.W, [14, 0, 0]), [0, 1, 0], "rig");
+      T(DB_HEAD, add(r.W, [-14, 0, 0]), add(r.W, [-7.5, 0, 0]), [0, 1, 0], "rig");
+    }
+    T(PAD, add(P, [0, -13.5, 6]), add(P, [0, -13.5, -82]), UT, "pad");
+    T(POST, [0, P[1] - 15, -4], [0, 2, -4], [1, 0, 0], "rig");
+    T(POST, [0, P[1] - 15, -62], [0, 2, -62], [1, 0, 0], "rig");
+    T(POST, [0, 2, -90], [0, 2, 20], [0, 1, 0], "rig");
+    T(POST, [-24, 2, -4], [24, 2, -4], [0, 1, 0], "rig");
+    T(POST, [-24, 2, -62], [24, 2, -62], [0, 1, 0], "rig");
+    for (let i = 0; i < 2; i++) {
+      const s = sg[i];
+      const H = add(P, [s * 9.5, -3, 0]);
+      const Ak = [s * 20, 9, 38];
+      const r2 = ik(H, Ak, 44, 42, [s * 0.3, 1, 0.2]);
+      T(HIPJ, add(H, [0, -8.8, 0]), add(H, [0, 8.8, 0]), [0, 0, 1]);
+      T(THIGH, H, r2.E, r2.pole);
+      T(SHIN, r2.E, r2.W, r2.pole);
+      T(KNEE, add(r2.E, [0, -5.6, 0]), add(r2.E, [0, 5.6, 0]), [0, 0, 1], "tend");
+      T(ANK, add(Ak, [0, -3.4, 0]), add(Ak, [0, 3.4, 0]), [0, 0, 1], "tend");
+      T(FOOT, add(Ak, [s * 0.5, -5, -7]), add(Ak, [s * 1.5, -5, 17]), [0, 1, 0], "tend");
+    }
+    return o;
   }
-  T(PAD, add(P, [0, -13.5, 6]), add(P, [0, -13.5, -82]), UT, "pad");
-  T(POST, [0, P[1] - 15, -4], [0, 2, -4], [1, 0, 0], "rig");
-  T(POST, [0, P[1] - 15, -62], [0, 2, -62], [1, 0, 0], "rig");
-  T(POST, [0, 2, -90], [0, 2, 20], [0, 1, 0], "rig");
-  T(POST, [-24, 2, -4], [24, 2, -4], [0, 1, 0], "rig");
-  T(POST, [-24, 2, -62], [24, 2, -62], [0, 1, 0], "rig");
-  for (let i = 0; i < 2; i++) {
-    const s = sg[i];
-    const H = add(P, [s * 9.5, -3, 0]);
-    const Ak = [s * 20, 9, 38];
-    const r2 = ik(H, Ak, 44, 42, [s * 0.3, 1, 0.2]);
-    T(HIPJ, add(H, [0, -8.8, 0]), add(H, [0, 8.8, 0]), [0, 0, 1]);
-    T(THIGH, H, r2.E, r2.pole);
-    T(SHIN, r2.E, r2.W, r2.pole);
-    T(KNEE, add(r2.E, [0, -5.6, 0]), add(r2.E, [0, 5.6, 0]), [0, 0, 1], "tend");
-    T(ANK, add(Ak, [0, -3.4, 0]), add(Ak, [0, 3.4, 0]), [0, 0, 1], "tend");
-    T(FOOT, add(Ak, [s * 0.5, -5, -7]), add(Ak, [s * 1.5, -5, 17]), [0, 1, 0], "tend");
-  }
-  return o;
+
+  const PATH = (function () {
+    const e0 = [];
+    const e1 = [];
+    const h0 = [];
+    const h1 = [];
+    for (let i = 0; i <= 16; i++) {
+      const p = pressPose(i / 16);
+      e0.push(p.E[0]);
+      e1.push(p.E[1]);
+      h0.push(p.grips[0]);
+      h1.push(p.grips[1]);
+    }
+    return [e0, e1, h0, h1];
+  })();
+
+  return {
+    label: cfg.label,
+    cycle: CYCLE,
+    phase: pressPhase,
+    pose: pressPose,
+    path: PATH,
+    role: cfg.role,
+    group: { pec: ["pec"], adelt: ["adelt"], tric: ["tric"], fore: ["fore"] },
+    phases: ["Set", "Lower", "Stretch", "Press"],
+    cues: cfg.cues,
+    muscles: cfg.muscles,
+    yaw: 38,
+    pitch: 12,
+    views: { three: 38 },
+    view: { tg: [0, 76, -36], span: 235 }
+  };
 }
 
-const PATH = (function () {
-  const e0 = [];
-  const e1 = [];
-  const h0 = [];
-  const h1 = [];
-  for (let i = 0; i <= 16; i++) {
-    const p = pressPose(i / 16);
-    e0.push(p.E[0]);
-    e1.push(p.E[1]);
-    h0.push(p.grips[0]);
-    h1.push(p.grips[1]);
-  }
-  return [e0, e1, h0, h1];
-})();
-
-export const DB_BENCH_PRESS_ANATOMY = {
+export const DB_BENCH_PRESS_ANATOMY = buildDbBenchPress({
   label: "3D dumbbell bench press demonstration",
-  cycle: CYCLE,
-  phase: pressPhase,
-  pose: pressPose,
-  path: PATH,
+  topX: 18,
+  botX: 31,
+  pole: 0.4,
   role: { pec: 0, adelt: 1, tric: 1, fore: 1 },
-  group: {
-    pec: ["pec"],
-    adelt: ["adelt"],
-    tric: ["tric"],
-    fore: ["fore"]
-  },
-  phases: ["Set", "Lower", "Stretch", "Press"],
   cues: [
     "Lie on a flat bench with your feet planted and shoulder blades pinched into the pad. Hold the dumbbells over your chest on straight arms, palms facing your feet.",
     "Lower the dumbbells under control to the sides of your chest, with your elbows about 45° from your body and your wrists stacked over your elbows.",
@@ -114,9 +123,45 @@ export const DB_BENCH_PRESS_ANATOMY = {
     ["adelt", "Front delts", 1],
     ["tric", "Triceps", 1],
     ["fore", "Forearms", 1]
+  ]
+});
+
+export const CLOSE_GRIP_DB_PRESS_ANATOMY = buildDbBenchPress({
+  label: "3D close-grip dumbbell press demonstration",
+  topX: 14,
+  botX: 19,
+  pole: 0.12,
+  role: { tric: 0, pec: 0, adelt: 1, fore: 1 },
+  cues: [
+    "Lie on a flat bench with your feet planted and your shoulder blades pinched into the pad. Hold the dumbbells close together over your chest on straight arms.",
+    "Lower the dumbbells to the sides of your lower chest with your elbows tucked close to your ribs. Keep your wrists stacked over your elbows.",
+    "Pause with the dumbbells beside your chest and your upper arms level with the bench. Keep your elbows tucked.",
+    "Press the dumbbells straight up, keeping them close together, until your arms are straight over your shoulders. Squeeze your triceps."
   ],
-  yaw: 38,
-  pitch: 12,
-  views: { three: 38 },
-  view: { tg: [0, 76, -36], span: 235 }
-};
+  muscles: [
+    ["tric", "Triceps", 0],
+    ["pec", "Inner chest", 0],
+    ["adelt", "Front delts", 1],
+    ["fore", "Forearms", 1]
+  ]
+});
+
+export const SQUEEZE_PRESS_ANATOMY = buildDbBenchPress({
+  label: "3D squeeze press demonstration",
+  topX: 14,
+  botX: 14,
+  pole: 0.1,
+  role: { pec: 0, tric: 1, adelt: 1, fore: 1 },
+  cues: [
+    "Lie on a flat bench with your feet planted. Hold two dumbbells together over your chest on straight arms and squeeze them against each other.",
+    "Lower the dumbbells to your mid chest while pressing them firmly together the whole way down. Keep your elbows tucked at about 45°.",
+    "Pause with the dumbbells touching your chest and keep squeezing them together. Feel your inner chest working.",
+    "Press the dumbbells straight up while keeping them pressed together until your arms are straight."
+  ],
+  muscles: [
+    ["pec", "Inner chest", 0],
+    ["tric", "Triceps", 1],
+    ["adelt", "Front delts", 1],
+    ["fore", "Forearms", 1]
+  ]
+});
