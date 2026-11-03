@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GoFit viewer preview</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/"
+  }
+}
+</script>
+<style>
+:root{color-scheme:dark}
+body{margin:0;min-height:100vh;background:#e7f4ef;color:#17202b;font:16px/1.45 ui-rounded,"Avenir Next","Segoe UI",system-ui,sans-serif}
+main{max-width:560px;margin:0 auto;padding:20px 16px 32px}
+h1{font-size:22px;margin:0 0 8px}
+p{margin:0 0 12px}
+.lead{color:#44515f;font-size:14px}
+#mount{height:min(72vh,640px)}
+.tools{display:flex;gap:8px;margin-top:12px}
+.tools button{border:0;border-radius:999px;padding:10px 14px;font:inherit;font-weight:800;background:#17202b;color:#fff;cursor:pointer}
+#state{min-height:1.2em;font-size:13px;font-weight:700;color:#0e9f8a}
+</style>
+</head>
+<body>
+<main>
+<h1>Viewer preview</h1>
+<p class="lead">Same lateral-raise viewer used from Demo &amp; muscles on the Train tab.</p>
+<div id="mount"></div>
+<div class="tools"><button type="button" id="release">Release viewer</button></div>
+<p id="state"></p>
+</main>
+<script type="module">
+import { mountExerciseViewer } from "./js/viewer/exercise-viewer.js";
+import { exerciseDemo } from "./js/exercises/registry.js";
+
+const mount = document.getElementById("mount");
+const state = document.getElementById("state");
+const release = document.getElementById("release");
+let viewer = null;
+
+function openViewer() {
+  const spec = exerciseDemo("lat", "Dumbbell lateral raise");
+  viewer = mountExerciseViewer(mount, Object.assign({}, spec, {
+    onReady: function () {
+      state.textContent = "Playing dumbbell lateral raise.";
+    },
+    onPlayState: function (playing) {
+      state.textContent = playing ? "Playing dumbbell lateral raise." : "Paused.";
+    }
+  }));
+  window.__exerciseViewer = viewer;
+  release.disabled = false;
+}
+
+release.addEventListener("click", function () {
+  if (!viewer) return;
+  viewer.dispose();
+  viewer = null;
+  release.disabled = true;
+  state.textContent = "Viewer released and the WebGL context was destroyed.";
+});
+
+openViewer();
+</script>
+</body>
+</html>

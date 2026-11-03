@@ -73,13 +73,14 @@ function pushQuat(list, q) {
 const ARM_KEYS = ["ux", "uz", "uy", "lz", "lx"];
 const ARM_KEYS_LOCK = ["ux", "uz", "lz", "lx"];
 
-function refineArm(pose, score, steps, passes, keys) {
+function refineArm(pose, score, steps, passes, keys, tolerance) {
   const search = keys || ARM_KEYS;
+  const tol = tolerance || 0.008;
   let best = score(pose);
   for (let s = 0; s < steps.length; s += 1) {
     const step = steps[s];
     for (let pass = 0; pass < passes; pass += 1) {
-      if (best < 0.008) return { pose: pose, error: best };
+      if (best < tol) return { pose: pose, error: best };
       for (let k = 0; k < search.length; k += 1) {
         const key = search[k];
         for (let dir = -1; dir <= 1; dir += 2) {
@@ -137,8 +138,37 @@ export function buildPoseClip(root, spec) {
   let prevSolved = null;
   const steps = 52;
   const lockTwist = !!spec.lockTwist;
-  const eulerPath = !!spec.eulerPath || lockTwist;
-  const searchKeys = lockTwist ? ARM_KEYS_LOCK : ARM_KEYS;
+  const straight = !!spec.straight;  const eulerPath = !!spec.eulerPath || lockTwist;
+  const searchKeys = lockTwist && !straight ? ARM_KEYS_LOCK : ARM_KEYS;
+  const solveTol = straight ? 0.0008 : 0.008;
+  const wristTarget = new THREE.Vector3();
+  const elbowTarget = new THREE.Vector3();
+  const pathStart = { wrist: new THREE.Vector3(), elbow: new THREE.Vector3() };
+  const pathEnd = { wrist: new THREE.Vector3(), elbow: new THREE.Vector3() };
+  let pathX = 0;
+  let pathY = 0;
+  let solvedLeft = null;
+  function scoreLeft(pose) {
+    upperL.quaternion.copy(restUL).multiply(deltaQuat({ x: pose.ux, y: pose.uy, z: pose.uz }));
+    lowerL.quaternion.copy(restLL).multiply(deltaQuat({ x: pose.lx, y: pose.ly, z: pose.lz }));
+    root.updateMatrixWorld(true);
+    lowerL.getWorldPosition(elbowL);
+    wristL.getWorldPosition(wristLP);
+    return wristLP.distanceTo(wristTarget) + 1.1 * elbowL.distanceTo(elbowTarget);
+  }
+  function capturePath(upperPose, lowerPose, into) {
+    upperL.quaternion.copy(restUL).multiply(deltaQuat(upperPose));
+    lowerL.quaternion.copy(restLL).multiply(deltaQuat(lowerPose));
+    root.updateMatrixWorld(true);
+    lowerL.getWorldPosition(into.elbow);
+    wristL.getWorldPosition(into.wrist);
+  }
+  if (straight) {
+    capturePath(start.UpperArmL || {}, start.LowerArmL || {}, pathStart);
+    capturePath(peak.UpperArmL || {}, peak.LowerArmL || {}, pathEnd);
+    pathX = (pathStart.wrist.x + pathEnd.wrist.x) / 2;
+    pathY = pathEnd.wrist.y + (pathStart.wrist.y - pathEnd.wrist.y) * 0.22;
+  }
   function score(pose) {
     upperR.quaternion.copy(restUR).multiply(deltaQuat({ x: pose.ux, y: pose.uy, z: pose.uz }));
     lowerR.quaternion.copy(restLR).multiply(deltaQuat({ x: pose.lx, y: pose.ly, z: pose.lz }));
@@ -221,7 +251,7 @@ export function buildPoseClip(root, spec) {
   // Per-frame IK was the source of visible hand vibration.
   let rightStart = null;
   let rightPeak = null;
-  if (lockTwist) {
+  if (lockTwist && !straight) {
     rightStart = solveRight(start.UpperArmL || {}, start.LowerArmL || {});
     rightPeak = solveRight(peak.UpperArmL || {}, peak.LowerArmL || {});
   }
@@ -230,8 +260,26 @@ export function buildPoseClip(root, spec) {
     const t = TIMING.duration * i / steps;
     const u = amount(t);
     times.push(t);
-    const leftUpper = mix(start.UpperArmL || {}, peak.UpperArmL || {}, u);
-    const leftLower = mix(start.LowerArmL || {}, peak.LowerArmL || {}, u);
+    let leftUpper = mix(start.UpperArmL || {}, peak.UpperArmL || {}, u);
+    let leftLower = mix(start.LowerArmL || {}, peak.LowerArmL || {}, u);
+    if (straight) {
+      wristTarget.set(pathX, pathY, pathStart.wrist.z + (pathEnd.wrist.z - pathStart.wrist.z) * u);
+      elbowTarget.lerpVectors(pathStart.elbow, pathEnd.elbow, u);
+      const guessLeft = solvedLeft || {
+        ux: leftUpper.x || 0,
+        uy: leftUpper.y || 0,
+        uz: leftUpper.z || 0,
+        lx: leftLower.x || 0,
+        ly: leftLower.y || 0,
+        lz: leftLower.z || 0
+      };
+      guessLeft.uy = leftUpper.y || 0;
+      guessLeft.ly = leftLower.y || 0;
+      const refinedLeft = refineArm(guessLeft, scoreLeft, solvedLeft ? [6, 3, 1.5, 0.75, 0.35] : [24, 12, 6, 3, 1.5, 0.75, 0.35], 4, ARM_KEYS_LOCK, solveTol);
+      solvedLeft = Object.assign({}, refinedLeft.pose);
+      leftUpper = { x: solvedLeft.ux, y: solvedLeft.uy, z: solvedLeft.uz };
+      leftLower = { x: solvedLeft.lx, y: solvedLeft.ly, z: solvedLeft.lz };
+    }
     const upperQ = eulerPath
       ? restUL.clone().multiply(deltaQuat(leftUpper))
       : leftUpperStart.clone().slerp(leftUpperPeak, u);
@@ -240,7 +288,7 @@ export function buildPoseClip(root, spec) {
       : leftLowerStart.clone().slerp(leftLowerPeak, u);
     upperL.quaternion.copy(upperQ);
     lowerL.quaternion.copy(lowerQ);
-    if (lockTwist) {
+    if (lockTwist && !straight) {
       const rightPose = mixArmPose(rightStart, rightPeak, u);
       rightPose.ly = -(leftLower.y || 0);
       rightPose.uy = -(leftUpper.y || 0);
@@ -279,9 +327,9 @@ export function buildPoseClip(root, spec) {
             bestSeed = seed;
           }
         });
-        guess = refineArm(bestSeed, score, [24, 12, 6, 3, 1], 4, searchKeys).pose;
+        guess = refineArm(bestSeed, score, [24, 12, 6, 3, 1], 4, searchKeys, solveTol).pose;
       }
-      let refined = refineArm(guess, score, solved ? [8, 3, 1] : [6, 2], solved ? 2 : 3, searchKeys);
+      let refined = refineArm(guess, score, solved ? (straight ? [4, 2, 1, 0.5] : [8, 3, 1]) : [6, 2], solved ? 2 : 3, searchKeys, solveTol);
       if (refined.error > 0.02) {
         const wide = refineArm(refined.pose, score, [28, 14, 7, 3, 1], 3, searchKeys);
         if (wide.error < refined.error) refined = wide;
@@ -294,13 +342,29 @@ export function buildPoseClip(root, spec) {
       upperR.quaternion.copy(restUR).multiply(deltaQuat({ x: solved.ux, y: solved.uy, z: solved.uz }));
       lowerR.quaternion.copy(restLR).multiply(deltaQuat({ x: solved.lx, y: solved.ly, z: solved.lz }));
     }
+    const palmQ = {};
+    if (straight && spec.palmFacing) {
+      root.updateMatrixWorld(true);
+      const facing = new THREE.Vector3(spec.palmFacing[0], spec.palmFacing[1], spec.palmFacing[2]).normalize();
+      ["WristL", "WristR"].forEach(function (wristName) {
+        const index = others.indexOf(wristName);
+        if (index < 0) return;
+        const pose = mix(start[wristName] || {}, peak[wristName] || {}, u);
+        const base = otherRest[index].clone().multiply(deltaQuat({ x: pose.x, z: pose.z }));
+        const frame = otherBones[index].parent.getWorldQuaternion(new THREE.Quaternion()).multiply(base);
+        const ex = new THREE.Vector3(1, 0, 0).applyQuaternion(frame);
+        const ez = new THREE.Vector3(0, 0, 1).applyQuaternion(frame);
+        const turn = Math.atan2(-ex.dot(facing), -ez.dot(facing)) * 180 / Math.PI;
+        palmQ[wristName] = base.multiply(axisQuat(0, 1, 0, turn));
+      });
+    }
     pushQuat(leftUpperValues, upperQ);
     pushQuat(leftLowerValues, lowerQ);
     pushQuat(rightUpperValues, upperR.quaternion);
     pushQuat(rightLowerValues, lowerR.quaternion);
     others.forEach(function (name, index) {
       const pose = mix(start[name] || {}, peak[name] || {}, u);
-      pushQuat(otherValues[index], otherRest[index].clone().multiply(deltaQuat(pose)));
+      pushQuat(otherValues[index], palmQ[name] || otherRest[index].clone().multiply(deltaQuat(pose)));
     });
   }
   upperL.quaternion.copy(leftUpperStart);

@@ -74,7 +74,9 @@ function motion(def) {
         clip: def.clip,
         start: def.start || {},
         peak: def.peak || {},
-        lockTwist: !!def.lockTwist
+        lockTwist: !!def.lockTwist,
+        straight: !!def.straight,
+        palmFacing: def.palmFacing || null
       }));
       if (def.grip === "plant") plantHands(root);
       else if (def.grip === "bar") gripBar(root);
@@ -130,6 +132,8 @@ function benchMotion(name, incline) {
       feet: true,
       mirrorLegs: true,
       lockTwist: true,
+      straight: true,
+      palmFacing: [0, -1, 0],
       orient: -90,
       view: "bench3",
       muscles: CHEST,
@@ -140,14 +144,14 @@ function benchMotion(name, incline) {
       start: {
         UpperArmL: { x: -80, y: -19, z: -110 },
         LowerArmL: { z: 11 },
-        WristL: { x: 18, y: -25 },
-        WristR: { x: 18, y: 25 }
+        WristL: { x: 18 },
+        WristR: { x: 18 }
       },
       peak: {
         UpperArmL: { x: 30, y: -30, z: -10 },
         LowerArmL: { z: -60, x: -30 },
-        WristL: { x: 18, y: -25 },
-        WristR: { x: 18, y: 25 }
+        WristL: { x: 18 },
+        WristR: { x: 18 }
       },
       cues: cues("Lie flat. Bar over the chest, feet planted.", "Lower the bar to mid-chest with elbows about 45°.", "Forearms vertical. Wrists stacked over elbows.", "Press up until the arms are straight. Soft lockout.")
     });

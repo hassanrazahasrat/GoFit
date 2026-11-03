@@ -193,6 +193,13 @@ body.quiz{padding-bottom:28px}
 #agoogle{width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 16px;border-radius:16px;border:0;background:var(--bg);color:var(--tx);font:inherit;font-size:15px;font-weight:800;cursor:pointer;box-shadow:inset 0 0 0 1px var(--ln)}
 #agoogle svg{width:18px;height:18px;flex:none}
 #agoogle:disabled{opacity:.45;cursor:default}
+#auth.auth-wait .auth-form{display:none}
+#auth:not(.auth-wait) .auth-load{display:none}
+.auth-load{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px 12px 10px;text-align:center}
+.auth-spin{width:36px;height:36px;border-radius:50%;border:3px solid var(--ln);border-top-color:var(--ac);animation:auth-spin .7s linear infinite}
+@keyframes auth-spin{to{transform:rotate(360deg)}}
+#auth.auth-wait h1,#auth.auth-wait .sub{text-align:center}
+#auth.auth-wait #am{text-align:center;font-size:14px;font-weight:700;color:var(--tx)}
 </style>
 <style>
 #pwa-bar{position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:9999;max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--card);color:var(--tx);border:1px solid var(--ln);box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:14px}
@@ -202,16 +209,19 @@ body.quiz{padding-bottom:28px}
 #pwa-bar button.x{background:transparent;color:var(--mut);padding:6px 8px;font-weight:400}
 </style>
 </head><body class="quiz">
-<div class="w" id="auth">
+<div class="w auth-wait" id="auth">
 <div class="kicker">GoFit</div>
-<h1>Your account</h1>
-<div class="sub">Sign in to load your profile, workouts, meals and measurements.</div>
+<h1 id="auth-title">Loading</h1>
+<div class="sub" id="auth-sub">Checking your account…</div>
 <div class="card">
-<div class="fld"><div><label for="ae">Email</label><input id="ae" type="email" autocomplete="username" placeholder="you@email.com"></div><div><label for="ap">Password</label><input id="ap" type="password" autocomplete="current-password" placeholder="At least 6 characters"></div></div>
-<div class="note" id="am">Connecting…</div>
-<div class="act"><button id="ain" class="p" type="button">Sign in</button><button id="aup" type="button">Create account</button></div>
+<div class="auth-load" aria-hidden="true"><div class="auth-spin" aria-hidden="true"></div></div>
+<div class="auth-form">
+<div class="fld"><div><label for="ae">Email</label><input id="ae" type="email" autocomplete="username" placeholder="you@email.com" disabled></div><div><label for="ap">Password</label><input id="ap" type="password" autocomplete="current-password" placeholder="At least 6 characters" disabled></div></div>
+<div class="act"><button id="ain" class="p" type="button" disabled>Sign in</button><button id="aup" type="button" disabled>Create account</button></div>
 <div class="gsep">or</div>
-<button id="agoogle" type="button"><svg viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>Continue with Google</button>
+<button id="agoogle" type="button" disabled><svg viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>Continue with Google</button>
+</div>
+<div class="note" id="am" aria-live="polite">Connecting…</div>
 </div>
 </div>
 <div class="w" id="quiz" hidden>
@@ -609,14 +619,14 @@ var DEMO3D={lat:1,press:1,ipress:1,ohp:1,dips:1,push:1,pushup:1,ipush:1,dpush:1,
 function use3d(anim,name){
 if(DEMO3D[anim])return 1;
 var n=String(name||"").toLowerCase();
-return n.indexOf("push-up")>=0||n.indexOf("push up")>=0||n.indexOf("shoulder tap")>=0;
+return n.indexOf("push-up")>=0||n.indexOf("push up")>=0||n.indexOf("shoulder tap")>=0||/^(barbell row|lat pulldown|incline barbell press|cable fly|rope pushdown|ez-bar curl|hammer curl|assisted dip|back squat|hack squat or back squat|romanian deadlift|seated leg curl|standing calf raise|calf raises|seated db shoulder press|seated dumbbell shoulder press|dumbbell lateral raise|db lateral raise|face pull|cable crunch|incline machine press|chest-supported row|chest-supported dumbbell row|inverted row|water-bottle curl$|backpack goblet squat$|backpack romanian deadlift$|glute bridge$|prone y raise$|dead bug$|water-bottle lateral raise$|one-arm backpack row$|(db|dumbbell) curl$|(db|dumbbell) romanian deadlift$|((db|dumbbell) )?goblet squat$|(db|dumbbell) leg curl$|standing (db|dumbbell) calf raise$|weighted crunch$|rear-delt ((db|dumbbell) )?fly(, elbows high)?$|bent-over (water-bottle )?rear-delt raise$|weighted dips?$|(barbell )?bench press$|straight-arm pulldown$|hanging knee raise$|leg extension$|side plank$|walking lunge$|seated cable row$|plank$|(db|dumbbell) bench press$|one-arm (db|dumbbell) row$|lying leg raise$|reverse lunge$|(db|dumbbell) pullover$|step-?up$|(pull-?up or assisted pull-?up|(band-)?assisted pull-?up|weighted pull-?up|neutral-grip pull-?up|chin-?up|pull-?up)$)/.test(n);
 }
 var trainDemo=null,trainDemoToken=0;
 function releaseTrainDemo(){trainDemoToken++;if(trainDemo){trainDemo.dispose();trainDemo=null}}
 function mountTrainDemo(){
 var host=$("demo3d");if(!host||trainDemo)return;
 var key=host.dataset.demo,name=host.dataset.name||"",token=++trainDemoToken;
-import("./js/exercises/registry.js?v=bench4").then(function(mod){
+import("./js/exercises/registry.js?v=core10").then(function(mod){
 var live=$("demo3d");
 if(token!==trainDemoToken||!live||live.dataset.demo!==key||(live.dataset.name||"")!==name)return;
 var spec=mod.exerciseDemo(key,name);
@@ -1027,7 +1037,17 @@ if(m<0||(m===0&&n.getDate()<d.getDate()))a--;
 return a;
 }
 function setAuthBusy(on){
-["ain","aup","agoogle"].forEach(function(id){var el=$(id);if(el)el.disabled=!!on});
+["ain","aup","agoogle","ae","ap"].forEach(function(id){var el=$(id);if(el)el.disabled=!!on});
+}
+function setAuthWait(on,msg){
+var auth=$("auth"),load=auth&&auth.querySelector(".auth-load");
+if(auth)auth.classList.toggle("auth-wait",!!on);
+if(load){load.setAttribute("aria-hidden",on?"false":"true");load.setAttribute("aria-busy",on?"true":"false")}
+if($("auth-title"))$("auth-title").textContent=on?"Loading":"Your account";
+if($("auth-sub"))$("auth-sub").textContent=on?"Getting your account ready.":"Sign in to load your profile, workouts, meals and measurements.";
+if(msg&&$("am"))$("am").textContent=msg;
+setAuthBusy(!!on);
+document.title=on?"Loading · GoFit":"Sign in · GoFit";
 }
 function authRedirect(){
 var path=location.pathname||"/";
@@ -1054,15 +1074,15 @@ if(/provider is not enabled|unsupported provider/i.test(text))return "Google sig
 if(/redirect|not allowed/i.test(text))return "Add this site to the Supabase redirect allow list, then try Google again.";
 return "Google sign-in could not be completed. Try again.";
 }
-function showAuth(){
-document.title="Sign in · GoFit";
+function showAuth(msg){
 document.body.classList.add("quiz");
 $("auth").hidden=false;
 $("quiz").hidden=true;
 $("app").hidden=true;
 $("t").hidden=true;
 $("nav").hidden=true;
-setAuthBusy(false);
+setAuthWait(false);
+if($("am"))$("am").textContent=msg||"";
 }
 function applyProfile(row){
 if(!row)return;
@@ -1428,8 +1448,8 @@ if($("app")&&!$("app").hidden&&validQ(S.q)){buildPlan(S.q);restoreOpen();draw();
 async function enterApp(){
 if(enterFlight)return enterFlight;
 var flight=(async function(){
-$("am").textContent="Loading your account…";
-try{await pullCloud()}catch(err){lastCloudError=(err&&err.message)||"Could not load your account.";if(err&&err.auth){$("am").textContent=lastCloudError;showAuth();return}}
+setAuthWait(true,"Loading your account…");
+try{await pullCloud()}catch(err){lastCloudError=(err&&err.message)||"Could not load your account.";if(err&&err.auth){showAuth(lastCloudError);return}}
 try{await loadLibraries()}catch(err){}
 sv();
 if(S.p)dp=copyP(S.p);
@@ -1448,11 +1468,9 @@ if(password.length<6){msg.textContent="Use at least 6 characters for the passwor
 setAuthBusy(true);
 msg.textContent=signUp?"Creating your account…":"Signing in…";
 var res=signUp?await window.sb.auth.signUp({email:email,password:password,options:{emailRedirectTo:location.href.split("#")[0]}}):await window.sb.auth.signInWithPassword({email:email,password:password});
-setAuthBusy(false);
-if(res.error){msg.textContent=res.error.message;return}
-if(signUp&&!(res.data&&res.data.session)){msg.textContent="Check your email and confirm the account, then sign in.";return}
-if(res.data&&res.data.session){var set=await window.sb.auth.setSession({access_token:res.data.session.access_token,refresh_token:res.data.session.refresh_token});if(set.error){msg.textContent=set.error.message;return}sbUser=res.data.session.user}
-msg.textContent="";
+if(res.error){setAuthBusy(false);msg.textContent=res.error.message;return}
+if(signUp&&!(res.data&&res.data.session)){setAuthBusy(false);msg.textContent="Check your email and confirm the account, then sign in.";return}
+if(res.data&&res.data.session){var set=await window.sb.auth.setSession({access_token:res.data.session.access_token,refresh_token:res.data.session.refresh_token});if(set.error){setAuthBusy(false);msg.textContent=set.error.message;return}sbUser=res.data.session.user}
 await enterApp();
 }
 async function authGoogle(){
@@ -1463,13 +1481,12 @@ setAuthBusy(true);
 msg.textContent="Opening Google…";
 var res=await window.sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:authRedirect(),queryParams:{prompt:"select_account"}}});
 if(res.error){setAuthBusy(false);msg.textContent=googleAuthMessage(res.error);return}
-setTimeout(function(){if($("auth")&&!$("auth").hidden)setAuthBusy(false)},2500);
+setTimeout(function(){if($("auth")&&!$("auth").hidden&&!$("auth").classList.contains("auth-wait"))setAuthBusy(false)},2500);
 }
 async function signOut(){
 if(window.sb)await window.sb.auth.signOut();
 sbUser=null;
-showAuth();
-$("am").textContent="Signed out.";
+showAuth("Signed out.");
 }
 function bindAuth(){
 if(window.authBound)return;
@@ -1496,18 +1513,20 @@ if(window.goFitStarted)return;
 window.goFitStarted=true;
 bindAuth();
 listenAuth();
+setAuthWait(true,"Checking your account…");
 var oauthNote=readOAuthError();
 var res=await window.sb.auth.getSession();
 clearAuthParams();
-if(res.error||!res.data.session){$("am").textContent=oauthNote||"Sign in with Google or email. A new email account needs a confirmation email before the first sign-in.";showAuth();return}
+if(res.error||!res.data.session){showAuth(oauthNote||"Sign in with Google or email. A new email account needs a confirmation email before the first sign-in.");return}
 sbUser=res.data.session.user;
 await enterApp();
 }
 function bootCloud(){
+setAuthWait(true,"Connecting…");
 function go(){if(window.sb)startGoFit()}
 if(window.sb)go();
 else window.addEventListener("sb-ready",go);
-setTimeout(function(){if(!window.goFitStarted)$("am").textContent="Could not reach the account service. Check your connection and refresh."},8000);
+setTimeout(function(){if(!window.goFitStarted){setAuthWait(true,"Could not reach the account service. Check your connection and refresh.")}},8000);
 document.addEventListener("visibilitychange",function(){if(document.visibilityState!=="visible"||!sbUser)return;var el=document.activeElement;if(el&&(el.tagName==="INPUT"||el.tagName==="TEXTAREA"))return;cloud(function(){return refreshFromCloud()})});
 }
 th();
