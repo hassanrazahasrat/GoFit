@@ -4,14 +4,15 @@ const CYCLE = 5.2;
 const LEAN_TOP = 6 * PI / 180;
 const LEAN_LOW = 72 * PI / 180;
 const TUCK = 24 * PI / 180;
-const P = [0, 52, 0];
-const Q = add(P, [0, 14, 0]);
+const KNEE_Y = 7.4;
+const THIGH_LEN = 44;
+const SIT_BACK = 14 * PI / 180;
 const POST = mk(1, 10, [[0, 2.4, 2.4, 2.4], [1, 2.4, 2.4, 2.4]], [], null);
 const PULLEY = mk(1, 20, [[0, 6, 6, 6], [1, 6, 6, 6]], [], null);
 const CABLE = mk(1, 6, [[0, 0.8, 0.8, 0.8], [1, 0.8, 0.8, 0.8]], [], null);
 const ROPE = mk(1, 8, [[0, 1.5, 1.5, 1.5], [1, 1.5, 1.5, 1.5]], [], null);
 const MAT = mk(1, 18, [[0, 1.8, 1.8, 24], [1, 1.8, 1.8, 24]], [], null);
-const PULLEY_AT = [0, 172, 62];
+const PULLEY_AT = [0, 175, 62];
 
 function crunchPhase(t) {
   t = ((t % CYCLE) + CYCLE) % CYCLE;
@@ -31,11 +32,15 @@ function crunchPose(u) {
   function T(d, from, to, up, col) { o.push({ d: d, A: from, B: to, u: up, col: col || "musc" }); }
   const sg = [1, -1];
   const lam = LEAN_TOP + (LEAN_LOW - LEAN_TOP) * u;
+  const phi = SIT_BACK * u;
   const a = [0, cos(lam), sin(lam)];
   const ut = [0, -sin(lam), cos(lam)];
-  const SC = add(Q, mul(a, 30));
-  T(TORSO, add(Q, mul(a, -24)), add(Q, mul(a, 36)), ut);
-  const NB = add(Q, mul(a, 36));
+  const hipY = KNEE_Y + THIGH_LEN * cos(phi);
+  const hipZ = -THIGH_LEN * sin(phi);
+  const P = [0, hipY + 3, hipZ];
+  const SC = add(P, mul(a, 44));
+  T(TORSO, add(P, mul(a, -10)), add(P, mul(a, 50)), ut);
+  const NB = add(P, mul(a, 50));
   const hl = lam + TUCK * u;
   const hd = [0, cos(hl), sin(hl)];
   const hu = [0, -sin(hl), cos(hl)];
@@ -60,7 +65,7 @@ function crunchPose(u) {
     o.E[i] = r.E;
   }
   o.grips = grips;
-  const J = add(C, mul(hd, 28));
+  const J = add(add(C, mul(hd, 14)), mul(hu, 8));
   for (let i = 0; i < 2; i++) {
     const dir = unit(sub(grips[i], J));
     T(ROPE, J, add(grips[i], mul(dir, 5)), [1, 0, 0], "hub");
@@ -75,13 +80,13 @@ function crunchPose(u) {
   T(MAT, [0, 1.8, -52], [0, 1.8, 14], [0, 1, 0], "pad");
   for (let i = 0; i < 2; i++) {
     const s = sg[i];
-    const H = add(P, [s * 9.5, -3, 0]);
+    const H = [s * 9.5, hipY, hipZ];
+    const K = [s * 10, KNEE_Y, 0];
     const Ak = [s * 12, 8, -42];
-    const r2 = ik(H, Ak, 44, 42, [0, 0, 1]);
     T(HIPJ, add(H, [0, -8.8, 0]), add(H, [0, 8.8, 0]), [0, 0, 1]);
-    T(THIGH, H, r2.E, r2.pole);
-    T(SHIN, r2.E, r2.W, r2.pole);
-    T(KNEE, add(r2.E, [0, -5.6, 0]), add(r2.E, [0, 5.6, 0]), [0, 0, 1], "tend");
+    T(THIGH, H, K, [s * 0.2, 0, 1]);
+    T(SHIN, K, Ak, [0, 1, 0]);
+    T(KNEE, add(K, [0, -5.6, 0]), add(K, [0, 5.6, 0]), [0, 0, 1], "tend");
     T(ANK, add(Ak, [0, -3.4, 0]), add(Ak, [0, 3.4, 0]), [0, 0, 1], "tend");
     T(FOOT, add(Ak, [s * 0.5, -3, 6]), add(Ak, [s * 1.5, -4, -18]), [0, -1, 0], "tend");
   }
@@ -114,9 +119,9 @@ export const CABLE_CRUNCH_ANATOMY = {
   phases: ["Set", "Crunch", "Squeeze", "Return"],
   cues: [
     "Kneel facing the cable with the rope held beside your head and your hips stacked over your knees. Keep your elbows pointing down.",
-    "Curl your ribs toward your hips and tuck your chin as you crunch down. Keep your hips still and do not sit back on your heels.",
+    "Curl your ribs toward your hips and tuck your chin as you crunch down. Let your hips drift back only a little and do not sit on your heels.",
     "Squeeze your abs hard at the bottom for a second with your back rounded and your elbows near your knees.",
-    "Uncurl slowly back to the start, keeping the rope against your head and your hips still."
+    "Uncurl slowly back to the start, keeping the rope beside your head and your hips over your knees."
   ],
   muscles: [
     ["abs", "Abs", 0],

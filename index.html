@@ -451,13 +451,13 @@ mv("Slow bicycle crunch","Slow bicycle crunch","Slow bicycle crunch",2,"12 / sid
 ],true)
 ]},
 "5":{title:"Five-day programme",blurb:"This is the alternative for weeks when you want to focus on individual muscle groups and enjoy longer sessions across the week.",days:[
-day("Chest","Day 1 — Chest + back","Arm circles, shoulder-blade squeezes ×15, then 2 easy ramp-up sets of the first press.",[
+day("Chest","Day 1 — Chest + triceps","Arm circles, shoulder-blade squeezes ×15, then 2 easy ramp-up sets of the first press.",[
 mv("Incline barbell or dumbbell press","Incline dumbbell press","Incline push-up",3,"8–10",120,"Full stretch at the bottom, then press up.","press","chest","delts,triceps",{lead:1,compound:1,pri:0,beginner:{full:"Incline dumbbell press"}}),
 mv("Flat machine press","Dumbbell bench press","Push-up",3,"10–12",90,"Full range. Squeeze at the top without slamming.","press","chest","delts,triceps",{compound:1,pri:1}),
-mv("Lat pulldown","Pull-up or assisted pull-up","Inverted row",3,"8–12",120,"Full stretch, then pull the elbows toward the hips.","pullup","lats","biceps,reardelts",{compound:1,pri:2,beginner:{limited:"Band-assisted pull-up",home:"Inverted row"}}),
-mv("Seated cable row","One-arm dumbbell row","One-arm dumbbell row",3,"10–12",90,"Long stretch, then pull toward the hip and pause.",{full:"row",limited:"crow",home:"crow"},"lats,traps","biceps,reardelts",{compound:1,pri:3}),
+mv("Weighted dips","Bench dip","Chair dip",3,"8–12",90,"Lean slightly forward so the chest does the work.","dips","chest","triceps,delts",{compound:1,pri:2,beginner:{full:"Assisted dip",limited:"Bench dip",home:"Chair dip"}}),
+mv("Pec deck","Squeeze press","Slow push-up",3,"12–15",60,"Squeeze the chest at the end of each rep.","press","chest","delts",{pri:3}),
 mv("Cable fly","Dumbbell fly","Wide push-up",2,"12–15",60,"Soft elbows. Stop when the chest stops doing the work.","press","chest","delts",{pri:4}),
-mv("Straight-arm pulldown","Dumbbell pullover","Dumbbell pullover",2,"12–15",60,"Arms stay nearly straight. Feel the lats.","pullup","lats","",{pri:5})
+mv("Rope pushdown","Dumbbell skull crusher","Diamond push-up",2,"12–15",45,"Elbows close. Squeeze the triceps.","push","triceps","",{pri:5})
 ]),
 day("Arms","Day 2 — Biceps + triceps","Easy curls and arm extensions ×12, wrist circles, then 1 light set of the first curl.",[
 mv("EZ-bar curl","Dumbbell curl","Dumbbell curl",3,"8–12",75,"Elbows stay still. Lower until the arms are straight.","curl","biceps","forearms",{lead:1,pri:0}),
@@ -475,15 +475,13 @@ mv("Seated leg curl","Dumbbell leg curl","Glute-bridge walkout",3,"10–15",60,"
 mv("Leg extension","Bulgarian split squat","Rear-foot-elevated split squat",2,"12–15",60,"Stay controlled. Do not slam the knees.",{full:"lpress",limited:"lunge",home:"lunge"},"quads","glutes",{pri:4}),
 mv("Calf raises","Standing dumbbell calf raise","Standing calf raise",3,"12–20",45,"Pause in the stretch, then rise all the way up.","calf","calves","",{pri:5})
 ]),
-day("Delts","Day 4 — Shoulders + core","Arm circles, shoulder-blade squeezes ×15, dead bugs ×8, then 1 light set of the press.",[
+day("Delts","Day 4 — Shoulders","Arm circles, shoulder-blade squeezes ×15, then 1 light set of the press.",[
 mv("Seated dumbbell shoulder press","Seated dumbbell shoulder press","Dumbbell shoulder press",3,"8–12",120,"Press slightly in front of the ears. Do not slam the lockout.","ohp","delts","triceps",{lead:1,compound:1,pri:0}),
 mv("Cable lateral raises","Dumbbell lateral raise","Dumbbell lateral raise",4,"12–20",45,"Lead with the elbows. Stop at shoulder height.","lat","delts","traps",{pri:1}),
 mv("Reverse pec deck","Rear-delt dumbbell fly","Bent-over rear-delt raise",3,"12–15",60,"Squeeze the rear delts, not the neck.","fpull","reardelts","traps",{pri:4}),
 mv("Face pulls","Rear-delt fly, elbows high","Prone Y raise",2,"15",45,"Pull toward the face and rotate the hands out.","fpull","reardelts","traps",{pri:6}),
-mv("Cable crunch","Weighted crunch","Dead bug",3,"12–15",45,"Round the spine. Keep the hips still.","crunch","abs","",{core:1,pri:2}),
-mv("Hanging knee raise","Lying leg raise","Lying leg raise",3,"10–15",60,"Curl the pelvis up. Do not swing.","leghr","abs","obliques,forearms",{core:1,pri:5,beginner:BEG_HANG}),
-mv("Side plank","Side plank","Side plank",2,"30–45 sec/side",30,"Hips stacked. Hold a straight line.","plank","obliques","abs,glutes",{core:1,pri:3})
-],true),
+mv("Arnold press","Arnold press","Pike push-up",3,"8–12",75,"Rotate the palms as you press. Stay controlled.","ohp","delts","triceps",{pri:5})
+]),
 day("Upper","Day 5 — Upper-body growth","Two easy sets of the first press and the first row. Shoulder-blade squeezes ×15.",[
 mv("Incline machine press","Incline dumbbell press","Decline push-up",3,"10–12",90,"Same path every rep. Control the stretch.","press","chest,delts","triceps",{lead:1,compound:1,pri:0}),
 mv("Chest-supported row","Chest-supported dumbbell row","One-arm dumbbell row",3,"10–12",90,"Pull toward the hip and pause. Keep the chest supported if you can.",{full:"row",limited:"row",home:"crow"},"lats,traps","biceps,reardelts",{compound:1,pri:1}),
@@ -623,7 +621,7 @@ function releaseTrainDemo(){trainDemoToken++;if(trainDemo){trainDemo.dispose();t
 function mountTrainDemo(){
 var host=$("demo3d");if(!host||trainDemo)return;
 var key=host.dataset.demo,name=host.dataset.name||"",token=++trainDemoToken;
-import("./js/exercises/registry.js?v=core13").then(function(mod){
+import("./js/exercises/registry.js?v=core16").then(function(mod){
 var live=$("demo3d");
 if(token!==trainDemoToken||!live||live.dataset.demo!==key||(live.dataset.name||"")!==name)return;
 var spec=mod.exerciseDemo(key,name);

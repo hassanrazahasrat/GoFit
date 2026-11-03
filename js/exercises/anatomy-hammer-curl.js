@@ -43,9 +43,10 @@ function curlPose(u) {
     T(ELB, add(E, [0, -4.2, 0]), add(E, [0, 4.2, 0]), [0, 0, 1], "tend");
     T(WRI, add(W, mul(f, -3)), add(W, mul(f, 3)), [1, 0, 0], "tend");
     T(HAND, W, add(W, mul(f, 9)), [1, 0, 0], "tend");
-    T(BAR, [g[0], g[1], g[2] - 7], [g[0], g[1], g[2] + 7], [0, 1, 0], "bar");
-    T(HEAD_WEIGHT, [g[0], g[1], g[2] + 7], [g[0], g[1], g[2] + 13], [0, 1, 0], "rig");
-    T(HEAD_WEIGHT, [g[0], g[1], g[2] - 13], [g[0], g[1], g[2] - 7], [0, 1, 0], "rig");
+    const b = [0, sin(theta), cos(theta)];
+    T(BAR, add(g, mul(b, -7)), add(g, mul(b, 7)), [1, 0, 0], "bar");
+    T(HEAD_WEIGHT, add(g, mul(b, 7)), add(g, mul(b, 13)), [1, 0, 0], "rig");
+    T(HEAD_WEIGHT, add(g, mul(b, -13)), add(g, mul(b, -7)), [1, 0, 0], "rig");
     grips[i] = g;
   }
   o.grips = grips;
