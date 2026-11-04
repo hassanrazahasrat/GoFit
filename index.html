@@ -621,7 +621,7 @@ function releaseTrainDemo(){trainDemoToken++;if(trainDemo){trainDemo.dispose();t
 function mountTrainDemo(){
 var host=$("demo3d");if(!host||trainDemo)return;
 var key=host.dataset.demo,name=host.dataset.name||"",token=++trainDemoToken;
-import("./js/exercises/registry.js?v=core16").then(function(mod){
+import("./js/exercises/registry.js?v=core17").then(function(mod){
 var live=$("demo3d");
 if(token!==trainDemoToken||!live||live.dataset.demo!==key||(live.dataset.name||"")!==name)return;
 var spec=mod.exerciseDemo(key,name);
