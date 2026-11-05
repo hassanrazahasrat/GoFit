@@ -978,7 +978,7 @@ return s+'<text x="50" y="209" text-anchor="middle" font-size="11" style="fill:v
 function pn(d,j){var m=M[d][j].split("|"),t=m[0],P=m[1].split(","),Q=m[2]?m[2].split(","):[],L=function(a){return a.map(function(x){return LB[x]}).join(", ")};
 if(use3d(t,D[d].e[j][0]))return demoHost(t,D[d].e[j][0]);
 return '<div class="mvp"><svg class="av" id="av" viewBox="0 0 100 100">'+(FP[t]?'<text x="4" y="10" font-size="7" style="fill:var(--mut);stroke:none">Side view</text>':"")+'<path class="fl" d="M0 92H100"/><g class="pr">'+(PR[t]||"")+'</g><polyline id="lg"/><line id="to"/><polyline id="ar"/><circle id="hd" r="6"/><circle id="eq" r="4" style="display:'+(NE.indexOf(t)<0?"inline":"none")+'"/></svg>'+(FP[t]?'<svg class="fv" id="fv" viewBox="0 0 100 100"><text x="4" y="10" font-size="7" style="fill:var(--mut);stroke:none">'+(VL[t]||"Front view")+'</text><g class="pr">'+(PF[t]||"")+'</g><circle id="fh" r="7"/><path id="ft"/><polyline id="fa"/><polyline id="fb"/><polyline id="fc"/><polyline id="fd"/><circle class="eq" id="fe1" r="3.5"/><circle class="eq" id="fe2" r="3.5"/></svg>':"")+'<div class="bd">'+bd(FR,P,Q,"Front")+bd(BK,P,Q,"Back")+'</div></div><div class="note"><b>Feel it in:</b> '+L(P)+" (main, solid color)"+(Q.length?" · helping: "+L(Q)+" (light color)":"")+". New to this lift? Start light, move slowly (about 2 s up, 2 s down) and copy the animation.</div>"}
-$("list").addEventListener("click",function(e){var b=e.target.closest(".mv");if(!b)return;if(b.dataset.h){HO[b.dataset.h]=!HO[b.dataset.h];ga("exercise_steps");draw();return}O=O==b.dataset.m?"":b.dataset.m;ga(O?"exercise_demo":"exercise_demo_hide");draw()});
+$("list").addEventListener("click",function(e){var b=e.target.closest(".mv");if(!b)return;if(b.dataset.h){HO[b.dataset.h]=!HO[b.dataset.h];ga("exercise_steps");draw();return}O=O==b.dataset.m?"":b.dataset.m;ga(O?"exercise_demo":"exercise_demo_hide");draw();if(O)requestAnimationFrame(function(){var el=document.querySelector(".card.ex .mvp")||document.querySelector(".card.ex .stage3d");if(el)el.scrollIntoView({behavior:"smooth",block:"start"})})});
 function logSession(){
 if(!D[S.d]||!D[S.d].e)return;
 var day=D[S.d],tot=0,dn=0;
@@ -1543,9 +1543,10 @@ bootCloud();
 
   var KEY="gofit-install-hide",bar=document.getElementById("pwa-bar"),msg=document.getElementById("pwa-msg"),go=document.getElementById("pwa-go"),later=null,evt=null;
   var standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+  var inApp=!!window.ReactNativeWebView;
   function snoozed(){try{var t=+localStorage.getItem(KEY);return !!t&&Date.now()-t<6048e5}catch(e){return false}}
   function hide(remember){bar.hidden=true;if(remember){try{localStorage.setItem(KEY,String(Date.now()))}catch(e){}}}
-  function show(text,label,fn){if(standalone||snoozed())return;msg.textContent=text;go.textContent=label;later=fn;bar.hidden=false}
+  function show(text,label,fn){if(inApp||standalone||snoozed())return;msg.textContent=text;go.textContent=label;later=fn;bar.hidden=false}
   go.onclick=function(){var f=later;hide(true);if(f)f()};
   document.getElementById("pwa-x").onclick=function(){hide(true)};
 
