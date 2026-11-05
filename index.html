@@ -1526,6 +1526,65 @@ document.addEventListener("visibilitychange",function(){if(document.visibilitySt
 th();
 tick();
 bootCloud();
+window.__gofitHealth=function(d){
+if(!d)return;
+var changed=false;
+S.sp=S.sp||{};
+var stepDays=Object.keys(d.steps||{});
+stepDays.forEach(function(day){
+var n=Math.round(+d.steps[day]||0);
+if(n>0){S.sp[day]=n;changed=true;if(sbUser)pushHealthDaily(day,n)}
+});
+if(d.weight&&+d.weight.kg>0){
+var wd=d.weight.date||dk(),kg=Math.round(+d.weight.kg*100)/100;
+S.wl=S.wl||[];
+var i,hit=false;
+for(i=0;i<S.wl.length;i++)if(S.wl[i].d===wd){if(S.wl[i].kg!==kg){S.wl[i].kg=kg;changed=true}hit=true}
+if(!hit){S.wl.push({d:wd,kg:kg});S.wl.sort(function(a,b){return a.d<b.d?-1:1});changed=true}
+var age=(new Date(dk()+"T12:00:00")-new Date(wd+"T12:00:00"))/86400000;
+if(age>=0&&age<=2)pushWeigh(kg);
+}
+var agg={};
+(d.workouts||[]).forEach(function(w){
+if(!w||!w.d||!w.n||!(+w.min>0))return;
+var key=w.d+"|"+w.n;
+if(!agg[key])agg[key]={d:w.d,n:w.n,min:0,start:w.start||w.d+"T12:00:00"};
+agg[key].min+=Math.round(+w.min);
+});
+var seen={};
+(S.hs||[]).forEach(function(h){if(h&&h.d&&h.n)seen[h.d+"|"+h.n]=1});
+Object.keys(agg).forEach(function(key){
+if(seen[key])return;
+var w=agg[key];
+S.hs=S.hs||[];
+S.hs.push({d:w.d,n:w.n,sets:0,tot:0,min:w.min,src:"health"});
+changed=true;
+if(sbUser)pushHealthWorkout(w);
+});
+if(S.hs.length>120)S.hs=S.hs.slice(-120);
+if(!changed)return;
+sv();
+if(typeof renderShell==="function")renderShell();
+};
+async function pushHealthDaily(day,n){
+try{
+var row={user_id:sbUser.id,stat_date:day,water_ml:(S.wa&&+S.wa[day])||0,steps:n,updated_at:new Date().toISOString()};
+var res=await window.sb.from("daily_stats").upsert(row,{onConflict:"user_id,stat_date"});
+if(res.error&&isMissing(res.error))return;
+}catch(e){}
+}
+async function pushHealthWorkout(w){
+try{
+var started=new Date(w.start||w.d+"T12:00:00");
+if(isNaN(started.getTime()))started=new Date(w.d+"T12:00:00");
+var b=dayBounds(w.d);
+var found=await window.sb.from("workout_sessions").select("id,started_at").eq("user_id",sbUser.id).eq("workout_type",w.n).gte("started_at",b[0]).lt("started_at",b[1]).limit(10);
+if(found.error)return;
+var dup=(found.data||[]).some(function(r){return Math.abs(new Date(r.started_at).getTime()-started.getTime())<7200000});
+if(dup)return;
+await window.sb.from("workout_sessions").insert({user_id:sbUser.id,workout_name:w.n,workout_type:w.n,started_at:started.toISOString(),completed_at:started.toISOString(),duration_minutes:w.min});
+}catch(e){}
+}
 </script>
 <div id="pwa-bar" hidden role="status"><span id="pwa-msg"></span><button type="button" id="pwa-go"></button><button type="button" class="x" id="pwa-x" aria-label="Dismiss">✕</button></div>
 <script>
