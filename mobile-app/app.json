@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.wa797789.mobile-app"
+      "bundleIdentifier": "com.wa797789.mobile-app",
+      "appleTeamId": "A9MV4WYJPA"
     },
     "android": {
       "adaptiveIcon": {
@@ -37,7 +38,15 @@
       ],
       "@react-native-google-signin/google-signin",
       "@kingstinct/react-native-healthkit",
-      "react-native-health-connect"
+      "react-native-health-connect",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "17.0"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

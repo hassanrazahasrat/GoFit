@@ -1601,7 +1601,7 @@ await window.sb.from("workout_sessions").insert({user_id:sbUser.id,workout_name:
 
   var KEY="gofit-install-hide",bar=document.getElementById("pwa-bar"),msg=document.getElementById("pwa-msg"),go=document.getElementById("pwa-go"),later=null,evt=null;
   var standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
-  var inApp=!!window.ReactNativeWebView;
+  var inApp=!!(window.__GOFIT_APP__||window.ReactNativeWebView)||/GoFitApp/.test(navigator.userAgent||"");
   function snoozed(){try{var t=+localStorage.getItem(KEY);return !!t&&Date.now()-t<6048e5}catch(e){return false}}
   function hide(remember){bar.hidden=true;if(remember){try{localStorage.setItem(KEY,String(Date.now()))}catch(e){}}}
   function show(text,label,fn){if(inApp||standalone||snoozed())return;msg.textContent=text;go.textContent=label;later=fn;bar.hidden=false}

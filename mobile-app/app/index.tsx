@@ -49,8 +49,11 @@ export default function App() {
         allowsBackForwardNavigationGestures
         allowsInlineMediaPlayback
         mediaPlaybackRequiresUserAction={false}
+        applicationNameForUserAgent="GoFitApp"
+        pullToRefreshEnabled
         startInLoadingState
         injectedJavaScriptBeforeContentLoaded={`
+          window.__GOFIT_APP__=1;
           (function(){
             var apply=function(){
               var m=document.querySelector('meta[name="viewport"]');
