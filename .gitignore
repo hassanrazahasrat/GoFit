@@ -1,3 +1,9 @@
 # Local secrets — never commit
 config.js
 .DS_Store
+
+# Archives & build artifacts
+Archive.zip
+*.apk
+*.aab
+*.ipa

@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+(function(){
+var standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+var inApp=!!(window.__GOFIT_APP__||window.ReactNativeWebView)||/GoFitApp/.test(navigator.userAgent||"");
+if(!standalone&&!inApp)return;
+var apply=function(){var m=document.querySelector('meta[name="viewport"]');if(m)m.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover')};
+if(document.head)apply();else document.addEventListener('DOMContentLoaded',apply);
+document.addEventListener('gesturestart',function(e){e.preventDefault()});
+document.addEventListener('gesturechange',function(e){e.preventDefault()});
+})();
+</script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-GL3YFWTKK7"></script>
 <script>
 window.dataLayer=window.dataLayer||[];
@@ -37,7 +48,7 @@ body{margin:0;background:var(--bg);background-image:var(--wash);background-attac
 h1{font-size:32px;font-weight:800;letter-spacing:-.045em;margin:2px 0 12px;line-height:1.05}.sub{color:var(--mut);font-size:14px;margin:0 0 28px;line-height:1.45}
 .kicker{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:0 0 4px}
 .apphead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:4px 0 28px}.apphead .sub{margin-bottom:0}
-.avatar{width:48px;height:48px;border-radius:50%;background:var(--ac);color:var(--on);display:grid;place-items:center;font-weight:800;font-size:18px;flex:none;box-shadow:0 8px 18px rgba(14,159,138,.28)}
+.avatar{width:48px;height:48px;border-radius:50%;background:var(--ac);color:var(--on);display:grid;place-items:center;font-weight:800;font-size:18px;flex:none;box-shadow:0 8px 18px rgba(14,159,138,.28);border:0;padding:0;cursor:pointer;font-family:inherit}
 .days,.tabs{display:flex;gap:8px;overflow-x:auto;margin:0 0 14px;padding:2px 2px 6px;scrollbar-width:none}
 .days::-webkit-scrollbar,.tabs::-webkit-scrollbar{display:none}
 .days button,.tabs button{flex:0 0 auto;min-width:92px;padding:10px 14px;border:0;background:var(--card);color:var(--tx);border-radius:18px;font-size:13px;font-weight:800;box-shadow:var(--sh);text-align:left}
@@ -84,6 +95,9 @@ input{width:84px;padding:12px 14px;border:0;border-radius:16px;background:var(--
 .qopt button.on{background:var(--ac);color:var(--on)}
 .qopt button.on small{color:var(--on);opacity:.85}
 .qt{margin:0 0 10px;font-size:16px}
+.qsteps{display:flex;gap:8px;margin:0 0 14px}
+.qsteps span{flex:1;min-width:0;padding:8px 6px;border-radius:12px;background:var(--field);color:var(--mut);font-size:11px;font-weight:800;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qsteps span.on{background:var(--ac);color:var(--on)}
 .pills{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px}
 .pills span{padding:7px 10px;border:0;background:var(--soft);color:var(--tx);border-radius:999px;font-size:12px;font-weight:750}
 .dayt{font-weight:800;font-size:20px;letter-spacing:-.03em;margin:4px 0 10px}
@@ -222,7 +236,7 @@ body.quiz{padding-bottom:28px}
 </div>
 <div class="w" id="quiz" hidden>
 <h1>Let's customise it for your gym</h1>
-<div class="sub">Five training questions, then a few body details. Your plan, calories and protein follow your answers.</div>
+<div class="sub">Three quick steps: your details, your goal, and your training preferences. Your plan, calories and protein follow your answers.</div>
 <div id="qq"></div>
 <div class="act"><button id="build" class="p" type="button">Build my plan</button><button id="back" type="button" hidden>Back</button><button id="qth" type="button">Theme</button></div>
 </div>
@@ -277,7 +291,7 @@ if(!S.sp)S.sp={};
 if(!S.bh)S.bh=[];
 if(!S.d)S.d=0;
 var sbUser=null,lastCloudError="",syncNote="",cloudChain=Promise.resolve(),openSession=null,pendingSnap=null,workoutTimer=0,EXBANK=[],enterFlight=null;
-var draft={},dp=copyP({}),qdone=0;
+var draft={},dp=copyP({}),qdone=0,qstep=0;
 var O="",raf=0;
 function sv(){try{localStorage.setItem("wp1",JSON.stringify(S))}catch(e){}}
 function th(){if(S.th)document.documentElement.setAttribute("data-theme",S.th);else document.documentElement.removeAttribute("data-theme")}
@@ -555,9 +569,17 @@ $("sub").textContent=prog.blurb+extra;
 $("pills").innerHTML=[(clock.deload?"Week "+clock.week+" · deload":"Week "+clock.week+" · "+clock.inBlock+" of 6"),PL.days[q.days],PL.goal[q.goal],PL.time[q.time],PL.equip[q.equip],PL.level[q.level]].map(function(t){return "<span>"+esc(t)+"</span>"}).join("");
 $("rule").textContent=clock.deload?"Easy week. Halve the weight, keep the reps smooth, and stop well before failure. Main lifts change when the next block starts.":"Main lifts stay for this block. Assistance exercises change each week. When every set hits the top of the rep range, add a little weight. Week 6 is a deload.";
 }
+var QSTEPS=["Personal details","Your goal","Training"];
+function stepOk(i){
+if(i===0){var b=bodyP(dp);return !!(dp.sex&&(dp.sex==="m"||dp.sex==="f")&&b&&b.a>0&&b.h>0&&b.w>0)}
+if(i===1)return validP(dp);
+return qdone===QUIZ.length&&validP(dp);
+}
 function renderQuiz(){
-var html="",done=0;
-QUIZ.forEach(function(q){
+var html='<div class="qsteps">'+QSTEPS.map(function(t,i){return '<span class="'+(i===qstep?"on":"")+'">'+(i+1)+". "+t+"</span>"}).join("")+"</div>",done=0;
+if(qstep===0)html+=pcardPersonal();
+else if(qstep===1)html+=pcardGoal();
+else QUIZ.forEach(function(q){
 var opts="";
 q.opts.forEach(function(o){
 var on=draft[q.id]===o.v;
@@ -566,13 +588,13 @@ opts+='<button type="button" class="'+(on?"on":"")+'" data-k="'+q.id+'" data-v="
 });
 html+='<div class="card"><h3 class="qt">'+esc(q.q)+'</h3><div class="qopt">'+opts+"</div></div>";
 });
-qdone=done;html+=pcard();html+='<div class="note">'+done+" of "+QUIZ.length+" training questions answered</div>";
-$("qq").innerHTML=html;
+if(qstep===2)html+='<div class="card"><h3 class="qt">Your targets</h3><div class="pv" id="pv"></div></div>';
+qdone=done;$("qq").innerHTML=html;
 updBuild();
-$("build").textContent=S.q?"Update my plan":"Build my plan";
-$("back").hidden=!validQ(S.q);
+$("build").textContent=qstep<2?"Next":(S.q?"Update my plan":"Build my plan");
 }
 function showQuiz(){
+qstep=0;
 document.title="Let's customise it for your gym";
 document.body.classList.add("quiz");
 $("auth").hidden=true;
@@ -667,8 +689,8 @@ $("qq").onclick=function(e){var b=e.target.closest("button");if(!b)return;
 if(b.dataset.p){var id=b.dataset.p,v=b.dataset.v;if(id==="u"&&dp.u!==v)convU(v);dp[id]=v;if(id==="goal"&&(v==="keep"||v==="recomp"))dp.pace="";if(id==="u"||id==="act"||id==="goal"||id==="pace")ga("profile_choice",{field:id,answer:v});renderQuiz();return}
 if(!b.dataset.k)return;draft[b.dataset.k]=b.dataset.v;ga("quiz_choice",{question:b.dataset.k,answer:b.dataset.v});renderQuiz()};
 $("qq").oninput=function(e){var k=e.target.dataset.pi;if(!k)return;if(k==="ft"||k==="in"){var box=e.target.closest(".fld"),ft=parseFloat(box.querySelector("[data-pi=ft]").value)||0,inch=parseFloat(String(box.querySelector("[data-pi=in]").value).replace(",","."))||0;dp.h=(ft||inch)?String(Math.round((ft*12+inch)*10)/10):"";updBuild();return}dp[k]=e.target.value.replace(",",".");updBuild()};
-$("build").onclick=function(){if(!validQ(draft)||!validP(dp))return;if(S.p&&S.p.u&&S.p.u!==dp.u)convLifts(S.p.u,dp.u||"m");S.p=copyP(dp);var next=copyQ(draft);var changed=JSON.stringify(S.q||null)!==JSON.stringify(next);S.q=next;if(changed){S.c={};S.d=0;O="";S.goalStart=dk();S.mealLock=0}ga("plan_save",{days:next.days,goal:next.goal,session:next.time,equipment:next.equip,level:next.level});sv();pushAccount();loadLibraries().then(function(){showApp();window.scrollTo(0,0)})};
-$("back").onclick=function(){if(!validQ(S.q))return;showApp();window.scrollTo(0,0)};
+$("build").onclick=function(){if(qstep<2){if(!stepOk(qstep))return;qstep++;ga("quiz_step",{step:qstep+1});renderQuiz();window.scrollTo(0,0);return}if(!validQ(draft)||!validP(dp))return;if(S.p&&S.p.u&&S.p.u!==dp.u)convLifts(S.p.u,dp.u||"m");S.p=copyP(dp);var next=copyQ(draft);var changed=JSON.stringify(S.q||null)!==JSON.stringify(next);S.q=next;if(changed){S.c={};S.d=0;O="";S.goalStart=dk();S.mealLock=0}ga("plan_save",{days:next.days,goal:next.goal,session:next.time,equipment:next.equip,level:next.level});sv();pushAccount();loadLibraries().then(function(){showApp();window.scrollTo(0,0)})};
+$("back").onclick=function(){if(qstep>0){qstep--;renderQuiz();window.scrollTo(0,0);return}if(!validQ(S.q))return;showApp();window.scrollTo(0,0)};
 $("ed").onclick=function(){draft=copyQ(S.q);dp=copyP(S.p||dp);showQuiz();window.scrollTo(0,0)};
 function dk(){return new Date().toLocaleDateString("en-CA")}
 function pb(l,v,t,u){return '<div class="meta" style="margin:8px 0 2px">'+l+": <b>"+v+"</b> / "+t+" "+u+'</div><div class="bar" style="margin:0"><i style="width:'+Math.min(100,v/t*100)+'%"></i></div>'}
@@ -701,25 +723,30 @@ function validP(p){var r=calcP(p,draft.days||(S.q&&S.q.days));return !!(r&&r.rea
 function wkTxt(kg,u){var v=Math.abs(kg);return u==="i"?(v*2.2046).toFixed(1)+" lb":v.toFixed(1)+" kg"}
 function convU(v){var h=+dp.h,w=+dp.w,tw=+dp.tw;if(v==="i"){if(h)dp.h=String(Math.round(h/2.54));if(w)dp.w=String(Math.round(w*2.2046226218*10)/10);if(tw)dp.tw=String(Math.round(tw*2.2046226218*10)/10)}else{if(h)dp.h=String(Math.round(h*2.54));if(w)dp.w=String(Math.round(w/2.2046226218*10)/10);if(tw)dp.tw=String(Math.round(tw/2.2046226218*10)/10)}}
 function ftIn(total){var n=+total;if(!n)return {ft:"",inch:""};var ft=Math.floor(n/12),inch=Math.round((n-ft*12)*10)/10;if(inch===12){ft++;inch=0}return {ft:String(ft),inch:inch?String(inch):"0"}}
-function pcard(){
+function pop(id,v,t,d){return '<button type="button" class="'+(dp[id]===v?"on":"")+'" data-p="'+id+'" data-v="'+v+'">'+esc(t)+(d?"<small>"+esc(d)+"</small>":"")+"</button>"}
+function pcardPersonal(){
 var i=dp.u==="i",fi=ftIn(dp.h);
-function o(id,v,t,d){return '<button type="button" class="'+(dp[id]===v?"on":"")+'" data-p="'+id+'" data-v="'+v+'">'+esc(t)+(d?"<small>"+esc(d)+"</small>":"")+"</button>"}
-var h='<div class="card"><h3 class="qt">About you, for your calories</h3>';
-h+='<div class="plbl">Units</div><div class="chips">'+o("u","m","cm & kg")+o("u","i","ft & lb")+"</div>";
+var h='<div class="card"><h3 class="qt">Personal details</h3>';
+h+='<div class="plbl">Units</div><div class="chips">'+pop("u","m","cm & kg")+pop("u","i","ft & lb")+"</div>";
 h+='<div class="plbl">Name</div><div class="fld" style="grid-template-columns:1fr"><div><label>What should we call you?</label><input data-pi="nm" placeholder="Alex" value="'+esc(dp.nm||"")+'"></div></div>';
-h+='<div class="plbl">Sex</div><div class="chips">'+o("sex","m","Male")+o("sex","f","Female")+"</div>";
+h+='<div class="plbl">Sex</div><div class="chips">'+pop("sex","m","Male")+pop("sex","f","Female")+"</div>";
 h+='<div class="plbl">Your numbers</div>';
 if(i)h+='<div class="fld imp"><div><label>Age (years)</label><input data-pi="age" inputmode="numeric" placeholder="28" value="'+esc(dp.age)+'"></div><div><label>Weight (pounds)</label><input data-pi="w" inputmode="decimal" placeholder="180" value="'+esc(dp.w)+'"></div><div><label>Height (feet)</label><input data-pi="ft" inputmode="numeric" placeholder="5" value="'+esc(fi.ft)+'"></div><div><label>Height (inches)</label><input data-pi="in" inputmode="decimal" placeholder="10" value="'+esc(fi.inch)+'"></div></div><div class="note">Height in feet and inches, weight in pounds. Example: 5 ft 10 in, 180 lb.</div>';
 else h+='<div class="fld"><div><label>Age (years)</label><input data-pi="age" inputmode="numeric" placeholder="28" value="'+esc(dp.age)+'"></div><div><label>Height (cm)</label><input data-pi="h" inputmode="decimal" placeholder="178" value="'+esc(dp.h)+'"></div><div><label>Weight (kg)</label><input data-pi="w" inputmode="decimal" placeholder="80" value="'+esc(dp.w)+'"></div></div><div class="note">Height in centimetres, weight in kilograms. Choose ft & lb above for feet and pounds.</div>';
 h+='<div class="fld" style="grid-template-columns:1fr"><div><label>Target weight ('+(i?"pounds":"kg")+', optional)</label><input data-pi="tw" inputmode="decimal" placeholder="'+(i?"165":"75")+'" value="'+esc(dp.tw||"")+'"></div></div>';
 h+='<div class="note">Leave the target blank if you are not aiming for a number on the scale.</div>';
-h+='<div class="plbl">Daily life outside your workouts</div><div class="qopt">'+o("act","sit","Mostly sitting","Desk job, under 5,000 steps a day")+o("act","light","Lightly active","About 5,000 to 8,000 steps a day")+o("act","active","Active","8,000 to 12,000 steps, or on your feet at work")+o("act","very","Very active","12,000+ steps a day or a physical job")+"</div>";
-h+='<div class="plbl">Health check</div><div class="qopt">'+o("med","n","No limits from a clinician","I can choose my training and food freely")+o("med","y","A clinician should guide me","Injury, a medical condition, medication, pregnancy, or a prescribed diet")+"</div>";
+h+='<div class="plbl">Health check</div><div class="qopt">'+pop("med","n","No limits from a clinician","I can choose my training and food freely")+pop("med","y","A clinician should guide me","Injury, a medical condition, medication, pregnancy, or a prescribed diet")+"</div>";
 h+='<div class="note">If a clinician is involved, confirm the plan with them before you follow it. GoFit does not diagnose, prescribe, or rewrite a programme around an injury.</div>';
-h+='<div class="plbl">Calorie goal</div><div class="qopt">'+o("goal","lose","Lose weight","Eat below maintenance")+o("goal","keep","Maintain weight","Eat at maintenance")+o("goal","recomp","Lose fat and build muscle together","Eat around maintenance, more on training days. Best for beginners, returning lifters or higher body fat")+o("goal","gain","Gain weight","Eat above maintenance")+"</div>";
+return h+'</div>';
+}
+function pcardGoal(){
+var h='<div class="card"><h3 class="qt">Your goal</h3>';
+h+='<div class="plbl">Daily life outside your workouts</div><div class="qopt">'+pop("act","sit","Mostly sitting","Desk job, under 5,000 steps a day")+pop("act","light","Lightly active","About 5,000 to 8,000 steps a day")+pop("act","active","Active","8,000 to 12,000 steps, or on your feet at work")+pop("act","very","Very active","12,000+ steps a day or a physical job")+"</div>";
+h+='<div class="plbl">Calorie goal</div><div class="qopt">'+pop("goal","lose","Lose weight","Eat below maintenance")+pop("goal","keep","Maintain weight","Eat at maintenance")+pop("goal","recomp","Lose fat and build muscle together","Eat around maintenance, more on training days. Best for beginners, returning lifters or higher body fat")+pop("goal","gain","Gain weight","Eat above maintenance")+"</div>";
 if(dp.goal==="lose"||dp.goal==="gain"){var L=dp.goal==="lose",a=L?[300,500,750]:[200,300,450];
 function pd(x){return x+" kcal "+(L?"below":"above")+" maintenance, about "+wkTxt(x*7/7700,dp.u)+" a week"}
-h+='<div class="plbl">How fast?</div><div class="qopt">'+o("pace","gentle","Gentle",pd(a[0]))+o("pace","std","Steady",pd(a[1]))+o("pace","fast","Faster",pd(a[2]))+"</div>"}
+h+='<div class="plbl">How fast?</div><div class="qopt">'+pop("pace","gentle","Gentle",pd(a[0]))+pop("pace","std","Steady",pd(a[1]))+pop("pace","fast","Faster",pd(a[2]))+"</div>"}
+h+='<div class="note" style="margin:10px 0 8px">Your calorie split uses the training days you pick on the next step.</div>';
 return h+'<div class="pv" id="pv"></div></div>';
 }
 function pvHtml(){
@@ -732,7 +759,7 @@ if(r.tdee)s+="<span>Maintenance "+fm(r.tdee)+" kcal</span>";
 if(r.ready)s+="<span>Target "+fm(r.k)+" kcal</span><span>Protein "+r.t.p+" g</span>";
 return '<div class="pills">'+s+"</div>"+(r.note?'<div class="note">'+esc(r.note)+"</div>":"");
 }
-function updBuild(){$("build").disabled=qdone!==QUIZ.length||!validP(dp);var e=$("pv");if(e)e.innerHTML=pvHtml()}
+function updBuild(){$("build").disabled=!stepOk(qstep);$("back").hidden=qstep===0?!validQ(S.q):false;var e=$("pv");if(e)e.innerHTML=pvHtml()}
 function targets(){
 var r=S.p&&calcP(S.p,S.q&&S.q.days);
 if(!r||!r.ready)return null;
@@ -991,7 +1018,7 @@ for(i=0;i<S.hs.length;i++)if(S.hs[i].d===row.d&&S.hs[i].n===row.n)hit=i;
 if(hit>=0)S.hs[hit]=row;else S.hs.push(row);
 if(S.hs.length>80)S.hs=S.hs.slice(-80);
 }
-function firstName(){var n=S.p&&S.p.nm?String(S.p.nm).trim():"";if(!n)return "there";return n.split(/\s+/)[0]}
+function firstName(){var n=S.p&&S.p.nm?String(S.p.nm).trim():"";if(!n&&sbUser){var m=sbUser.user_metadata||{};n=String(m.full_name||m.name||"").trim();if(!n&&sbUser.email)n=String(sbUser.email).split("@")[0]}if(!n)return "there";n=n.split(/\s+/)[0];return n.charAt(0).toUpperCase()+n.slice(1)}
 function todayE(){return (S.e&&S.e[dk()])||{k:0,p:0,c:0,f:0}}
 function volTxt(ml){ml=+ml||0;if(liftUnit()==="i"){var oz=ml/29.5735,s=(Math.round(oz*10)/10).toFixed(1);return (s.slice(-2)===".0"?s.slice(0,-2):s)+" fl oz"}if(ml>=1000){var L=(Math.round(ml/100)/10).toFixed(1);return (L.slice(-2)===".0"?L.slice(0,-2):L)+" L"}return Math.round(ml)+" ml"}
 function waterGoalMl(){var b=bodyP(S.p);if(!b)return 2500;return Math.round(Math.min(4000,Math.max(2000,b.w*35))/50)*50}
@@ -1006,9 +1033,9 @@ function outlook(){var rows=sortedWl();if(rows.length<2)return "Log your weight 
 function cmTxt(cm){if(!(cm>0))return "";if(liftUnit()==="i"){var s=(Math.round(cm/2.54*10)/10).toFixed(1);return (s.slice(-2)===".0"?s.slice(0,-2):s)+" in"}return (Math.round(cm*10)/10)+" cm"}
 function ico(n){var p={train:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9v6M18 9v6M3 12h3M18 12h3M6 8h3v8H6zM15 8h3v8h-3z"/></svg>',meal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 10h16M6 10v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-8M8 10V7a4 4 0 0 1 8 0v3"/></svg>',chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V10M10 19V5M16 19v-7M22 19H2"/></svg>',drop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/></svg>'};return p[n]||""}
 function art(){return '<svg viewBox="0 0 160 150" width="100%" height="150"><circle cx="112" cy="48" r="26" fill="rgba(255,255,255,.28)"/><circle cx="92" cy="58" r="9" fill="#fff"/><path d="M70 112c6-26 16-38 32-38 12 0 16 10 14 20" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"/><path d="M36 86h70M44 74v24M98 74v24" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"/></svg>'}
-function renderHome(){var e=todayE(),pack=targets(),s=sessionBits(),w=(S.wa&&S.wa[dk()])||0,g=waterGoalMl(),x=pack?pack.map[S.n&&pack.map[S.n]?S.n:"t"]:null;var med=S.p&&S.p.med==="y"?'<div class="warn">You said a clinician should guide your exercise or diet. Treat this plan as a draft until they have reviewed it.</div>':"";var pct=s.tot?Math.round(s.dn/s.tot*100):(x&&x.k?Math.min(100,Math.round((e.k||0)/x.k*100)):0),circ=226.2,off=circ*(1-pct/100),name=esc(firstName()),initial=(firstName().trim().charAt(0)||"G").toUpperCase();$("viewh").innerHTML=med+'<div class="apphead"><div><div class="kicker">Today</div><div class="hello">Hi, '+name+'</div><div class="sub">'+(x?"Ready for today? "+fm(x.k)+" kcal and "+x.p+" g of protein.":"Finish setup to see today's calories and workout.")+((lastCloudError||syncNote)?" "+(lastCloudError||syncNote):"")+'</div></div><div class="avatar" aria-hidden="true">'+initial+'</div></div><section class="sheet"><div class="sheet-h"><h3>Today\'s progress</h3><span class="chip">'+(s.tot?s.dn+" / "+s.tot+" sets":"Setup")+'</span></div><div class="prow"><div class="ring" aria-hidden="true"><svg viewBox="0 0 88 88"><circle cx="44" cy="44" r="36"/><circle class="v" cx="44" cy="44" r="36" style="stroke-dasharray:'+circ+';stroke-dashoffset:'+off+'"/></svg><b>'+pct+'%</b></div><ul class="legend"><li><i></i><span>Workout</span><b>'+pct+'%</b></li><li><i class="c2"></i><span>Calories</span><b>'+(x?fm(e.k||0):"—")+'</b></li><li><i class="c3"></i><span>Protein</span><b>'+(x?(e.p||0)+" g":"—")+'</b></li></ul></div></section><section class="sheet"><div class="sheet-h"><h3>This week</h3><span class="chip">'+weekMin()+' min</span></div><div class="bars">'+weekHtml()+'</div></section><div class="qa"><button type="button" data-go="train"><span class="qi">'+ico("train")+'</span><b>Start workout</b><small>'+esc(s.title||"Today's session")+'</small></button><button type="button" data-go="meals"><span class="qi q2">'+ico("meal")+'</span><b>Log food</b><small>'+(x?fm(Math.max(0,x.k-(e.k||0)))+" kcal left":"Open meals")+'</small></button><button type="button" data-go="prog"><span class="qi q3">'+ico("chart")+'</span><b>Body stats</b><small>Weight and steps</small></button><button type="button" data-water="250"><span class="qi q4">'+ico("drop")+'</span><b>Add water</b><small>'+esc(volTxt(w))+" of "+esc(volTxt(g))+'</small></button></div><section class="feature"><div class="feature-copy"><div class="kicker">Session</div><h3>'+esc(s.title||"Today's workout")+'</h3><div class="meta">'+(s.ex?s.ex+" exercises · "+s.dn+" of "+s.tot+" sets":"Your session appears after the plan is built.")+'</div><button type="button" class="p" data-go="train">'+(s.dn?"Continue":"Start")+'</button></div><div class="feature-art" aria-hidden="true">'+art()+'</div></section><section class="sheet"><div class="sheet-h"><h3>Water</h3><span class="chip">'+esc(volTxt(w))+'</span></div><div class="bar"><i style="width:'+Math.min(100,g?w/g*100:0)+'%"></i></div><div class="act"><button type="button" data-water="250">+'+esc(volTxt(250))+'</button><button type="button" data-water="500">+'+esc(volTxt(500))+'</button></div></section><div class="insight">'+esc(nextLine())+'</div>'}
+function renderHome(){var e=todayE(),pack=targets(),s=sessionBits(),w=(S.wa&&S.wa[dk()])||0,g=waterGoalMl(),x=pack?pack.map[S.n&&pack.map[S.n]?S.n:"t"]:null;var med=S.p&&S.p.med==="y"?'<div class="warn">You said a clinician should guide your exercise or diet. Treat this plan as a draft until they have reviewed it.</div>':"";var pct=s.tot?Math.round(s.dn/s.tot*100):(x&&x.k?Math.min(100,Math.round((e.k||0)/x.k*100)):0),circ=226.2,off=circ*(1-pct/100),name=esc(firstName()),initial=(firstName().trim().charAt(0)||"G").toUpperCase();$("viewh").innerHTML=med+'<div class="apphead"><div><div class="kicker">Today</div><div class="hello">Hi, '+name+'</div><div class="sub">'+(x?"Ready for today? "+fm(x.k)+" kcal and "+x.p+" g of protein.":"Finish setup to see today's calories and workout.")+((lastCloudError||syncNote)?" "+(lastCloudError||syncNote):"")+'</div></div><button type="button" class="avatar" data-go="you" aria-label="Open profile">'+initial+'</button></div><section class="sheet"><div class="sheet-h"><h3>Today\'s progress</h3><span class="chip">'+(s.tot?s.dn+" / "+s.tot+" sets":"Setup")+'</span></div><div class="prow"><div class="ring" aria-hidden="true"><svg viewBox="0 0 88 88"><circle cx="44" cy="44" r="36"/><circle class="v" cx="44" cy="44" r="36" style="stroke-dasharray:'+circ+';stroke-dashoffset:'+off+'"/></svg><b>'+pct+'%</b></div><ul class="legend"><li><i></i><span>Workout</span><b>'+pct+'%</b></li><li><i class="c2"></i><span>Calories</span><b>'+(x?fm(e.k||0):"—")+'</b></li><li><i class="c3"></i><span>Protein</span><b>'+(x?(e.p||0)+" g":"—")+'</b></li></ul></div></section><section class="sheet"><div class="sheet-h"><h3>This week</h3><span class="chip">'+weekMin()+' min</span></div><div class="bars">'+weekHtml()+'</div></section><div class="qa"><button type="button" data-go="train"><span class="qi">'+ico("train")+'</span><b>Start workout</b><small>'+esc(s.title||"Today's session")+'</small></button><button type="button" data-go="meals"><span class="qi q2">'+ico("meal")+'</span><b>Log food</b><small>'+(x?fm(Math.max(0,x.k-(e.k||0)))+" kcal left":"Open meals")+'</small></button><button type="button" data-go="prog"><span class="qi q3">'+ico("chart")+'</span><b>Body stats</b><small>Weight and steps</small></button><button type="button" data-water="250"><span class="qi q4">'+ico("drop")+'</span><b>Add water</b><small>'+esc(volTxt(w))+" of "+esc(volTxt(g))+'</small></button></div><section class="feature"><div class="feature-copy"><div class="kicker">Session</div><h3>'+esc(s.title||"Today's workout")+'</h3><div class="meta">'+(s.ex?s.ex+" exercises · "+s.dn+" of "+s.tot+" sets":"Your session appears after the plan is built.")+'</div><button type="button" class="p" data-go="train">'+(s.dn?"Continue":"Start")+'</button></div><div class="feature-art" aria-hidden="true">'+art()+'</div></section><section class="sheet"><div class="sheet-h"><h3>Water</h3><span class="chip">'+esc(volTxt(w))+'</span></div><div class="bar"><i style="width:'+Math.min(100,g?w/g*100:0)+'%"></i></div><div class="act"><button type="button" data-water="250">+'+esc(volTxt(250))+'</button><button type="button" data-water="500">+'+esc(volTxt(500))+'</button></div></section><div class="insight">'+esc(nextLine())+'</div>'}
 function renderProg(){var rows=sortedWl(),last=rows.length?rows[rows.length-1]:null,b=bodyP(S.p),r=S.p&&calcP(S.p,S.q&&S.q.days),now=last?fmtW(last.kg)+" "+unitWord():(b?fmtW(b.w)+" "+unitWord()+" from your profile":"No weigh-in yet"),list=rows.slice(-8).reverse().map(function(x){return "<li><span>"+esc(prWhen(x.d))+"</span><span>"+esc(fmtW(x.kg)+" "+unitWord())+"</span></li>"}).join(""),latest=(S.bh||[])[(S.bh||[]).length-1]||{},u=liftUnit()==="i"?"in":"cm";function mf(key,label){var ph=latest[key]?String(cmTxt(latest[key])).replace(/[^0-9.]/g,""):"";return '<div><label>'+label+" ("+u+')</label><input data-m="'+key+'" inputmode="decimal" placeholder="'+esc(ph)+'"></div>'}var prs=Object.keys(S.pr||{}).map(function(n){return {n:n,p:S.pr[n]}}).filter(function(x){return x.p&&x.p.kg>0}).sort(function(a,c){return c.p.kg-a.p.kg}).slice(0,6),steps=S.sp&&S.sp[dk()]!=null?S.sp[dk()]:"",sg={sit:5000,light:7000,active:10000,very:12000}[(S.p&&S.p.act)||""]||8000,w=(S.wa&&S.wa[dk()])||0,stepN=steps===""?0:+steps,stepPct=Math.min(100,Math.round(stepN/sg*100)),waterPct=Math.min(100,Math.round(w/(waterGoalMl()||1)*100));$("viewp").innerHTML='<div class="kicker">Activity</div><div class="hello">Progress</div><div class="sub">Built from your weigh-ins, sessions and lifts. A single reading is not a result.</div><div class="stats"><div class="stat"><b>'+weekMin()+'</b><small>min this week</small></div><div class="stat"><b>'+stepPct+'%</b><small>of '+sg+' steps</small></div><div class="stat"><b>'+waterPct+'%</b><small>water goal</small></div></div>'+(r&&r.bmi?'<div class="sheet"><div class="sheet-h"><h3>BMI '+r.bmi.toFixed(1)+'</h3><span class="chip">'+esc(r.cat)+'</span></div>'+bmiMark(r.bmi)+'</div>':"")+'<div class="card"><h3>Weight</h3><div class="meta">Latest: '+esc(now)+(S.p&&S.p.tw?" · target "+esc(S.p.tw)+" "+(S.p.u==="i"?"lb":"kg"):"")+'</div><div class="row"><input id="win" inputmode="decimal" placeholder="'+unitWord()+'"><button type="button" class="mini" data-save="wt">Save today</button></div>'+(list?'<ul class="ing">'+list+"</ul>":"")+'<div class="note">'+esc(outlook())+"</div></div>"+'<div class="card"><h3>Measurements</h3><div class="meta">Same sites, morning, relaxed. Optional.</div><div class="fld imp">'+mf("waist","Waist")+mf("chest","Chest")+mf("arm","Arm")+mf("thigh","Thigh")+mf("hip","Hips")+'</div><button type="button" class="mini" data-save="meas" style="margin-top:8px">Save measurements</button>'+(latest.d?'<div class="note">Last saved '+esc(prWhen(latest.d))+esc(["waist","chest","arm","thigh","hip"].filter(function(k){return latest[k]>0}).map(function(k){return " · "+k+" "+cmTxt(latest[k])}).join(""))+"</div>":"")+"</div>"+'<div class="card"><h3>Steps today</h3><div class="bignum" style="font-size:32px">'+(steps===""?"0":steps)+'</div><div class="meta">Goal '+sg+'</div><div class="bar"><i style="width:'+stepPct+'%"></i></div><div class="row"><input id="spin" inputmode="numeric" placeholder="'+sg+'" value="'+esc(steps)+'"><button type="button" class="mini" data-save="steps">Save</button></div><div class="note">Type the step count from your phone or watch. GoFit does not read it automatically.</div></div><div class="sheet"><div class="sheet-h"><h3>This week</h3></div><div class="bars">'+weekHtml()+'</div></div>'+(prs.length?'<div class="card"><h3>Strength records</h3><ul class="ing">'+prs.map(function(x){return "<li><span>"+esc(x.n)+"</span><span>"+esc(fmtW(x.p.kg)+" "+unitWord()+(x.p.d?" · "+prWhen(x.p.d):""))+"</span></li>"}).join("")+"</ul></div>":"")}
-function renderYou(){var r=S.p&&calcP(S.p,S.q&&S.q.days),nm=S.p&&S.p.nm?String(S.p.nm).trim():"",shown=nm?esc(nm):"You",initial=(nm||"Y").charAt(0).toUpperCase(),tiles=r&&r.ready?'<div class="tiles"><div class="tile"><small>BMI</small><b>'+r.bmi.toFixed(1)+'</b></div><div class="tile"><small>BMR</small><b>'+fm(r.bmr)+'</b></div><div class="tile"><small>Maintenance</small><b>'+fm(r.tdee)+'</b></div><div class="tile"><small>Target kcal</small><b>'+fm(r.k)+'</b></div></div>':"";$("viewy").innerHTML='<div class="apphead"><div><div class="kicker">Profile</div><div class="hello">'+shown+'</div><div class="sub">Units, calories and the plan behind each day.</div></div><div class="avatar" aria-hidden="true">'+initial+'</div></div>'+tiles+'<div class="card"><h3>Your numbers</h3><div class="note">'+(r&&r.bmr?"BMR uses Mifflin-St Jeor. Maintenance multiplies it by daily life and training days. Protein, fat and carbs start from your weight and goal, then meals are portioned from the food list.":"Add your details to calculate BMI, BMR and calories.")+'</div><div class="act"><button type="button" class="p" data-edit="1">Update plan</button><button type="button" data-theme="1">Theme</button></div></div><div class="card"><h3>Account</h3><div class="note">'+(lastCloudError?esc(lastCloudError):esc(syncNote||"Profile, goals, workouts, meals and measurements are saved to your account."))+'</div><div class="act"><button type="button" data-signout="1">Sign out</button></div></div>'}
+function renderYou(){var r=S.p&&calcP(S.p,S.q&&S.q.days),nm=S.p&&S.p.nm?String(S.p.nm).trim():"",shown=nm?esc(nm):"You",tiles=r&&r.ready?'<div class="tiles"><div class="tile"><small>BMI</small><b>'+r.bmi.toFixed(1)+'</b></div><div class="tile"><small>BMR</small><b>'+fm(r.bmr)+'</b></div><div class="tile"><small>Maintenance</small><b>'+fm(r.tdee)+'</b></div><div class="tile"><small>Target kcal</small><b>'+fm(r.k)+'</b></div></div>':"";$("viewy").innerHTML='<div class="apphead"><div><div class="kicker">Profile</div><div class="hello">'+shown+'</div><div class="sub">Units, calories and the plan behind each day.</div></div></div>'+tiles+'<div class="card"><h3>Your numbers</h3><div class="note">'+(r&&r.bmr?"BMR uses Mifflin-St Jeor. Maintenance multiplies it by daily life and training days. Protein, fat and carbs start from your weight and goal, then meals are portioned from the food list.":"Add your details to calculate BMI, BMR and calories.")+'</div><div class="act"><button type="button" class="p" data-edit="1">Update plan</button><button type="button" data-theme="1">Theme</button></div></div><div class="card"><h3>Account</h3><div class="note">'+(lastCloudError?esc(lastCloudError):esc(syncNote||"Profile, goals, workouts, meals and measurements are saved to your account."))+'</div><div class="act"><button type="button" data-signout="1">Sign out</button></div></div>'}
 function paintNav(){var buttons=$("nav").querySelectorAll("button"),i;for(i=0;i<buttons.length;i++)buttons[i].className=buttons[i].dataset.tab===(S.tab||"home")?"on":""}
 function renderShell(){if(!$("app")||$("app").hidden)return;paintNav();if((S.tab||"home")==="home")renderHome();if(S.tab==="prog")renderProg();if(S.tab==="you")renderYou()}
 function goTab(id){S.tab=id;$("viewh").hidden=id!=="home";$("viewt").hidden=id!=="train";$("viewm").hidden=id!=="meals";$("viewp").hidden=id!=="prog";$("viewy").hidden=id!=="you";if(!$("app").hidden)$("t").hidden=left<=0;if(id!=="train")releaseTrainDemo();else if($("demo3d")&&!trainDemo)mountTrainDemo();ga("screen_view",{screen_name:id});sv();renderShell();window.scrollTo(0,0)}
