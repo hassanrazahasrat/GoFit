@@ -13,7 +13,7 @@
       "appleTeamId": "A9MV4WYJPA"
     },
     "android": {
-      "package": "com.wa797789.gofit",
+      "package": "com.gofitgym",
       "adaptiveIcon": {
         "backgroundColor": "#E7F6F2",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
