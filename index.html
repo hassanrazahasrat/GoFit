@@ -214,6 +214,12 @@ body.quiz{padding-bottom:28px}
 .auth-links a{color:var(--mut);font-weight:700;text-decoration:none}
 .auth-links a:hover{color:var(--ac)}
 .auth-links span{color:var(--ln);margin:0 8px}
+#amsg{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;background:rgba(9,12,16,.5);padding:20px}
+#amsg[hidden]{display:none}
+.amsg-card{background:var(--card);border-radius:24px;padding:24px 20px;max-width:340px;width:100%;box-shadow:var(--sh);text-align:center}
+.amsg-ic{width:52px;height:52px;border-radius:50%;margin:0 auto 12px;display:grid;place-items:center;font-size:24px;font-weight:900}
+.amsg-t{font-size:15px;font-weight:700;margin-bottom:16px;white-space:pre-line}
+#amsg-ok{width:100%}
 </style>
 <style>
 #pwa-bar{position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:9999;max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--card);color:var(--tx);border:1px solid var(--ln);box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:14px}
@@ -237,6 +243,13 @@ body.quiz{padding-bottom:28px}
 </div>
 <div class="note" id="am" aria-live="polite">Connecting…</div>
 <div class="auth-links"><a href="privacy.html">Privacy Policy</a><span>·</span><a href="terms.html">Terms</a></div>
+</div>
+<div id="amsg" hidden>
+<div class="amsg-card">
+<div class="amsg-ic" id="amsg-ic">!</div>
+<div class="amsg-t" id="amsg-t"></div>
+<button type="button" class="p" id="amsg-ok">OK</button>
+</div>
 </div>
 </div>
 <div class="w" id="quiz" hidden>
@@ -1062,6 +1075,15 @@ var n=new Date(),a=n.getFullYear()-d.getFullYear(),m=n.getMonth()-d.getMonth();
 if(m<0||(m===0&&n.getDate()<d.getDate()))a--;
 return a;
 }
+function authAlert(text,good){
+var m=$("amsg");if(!m)return;
+$("amsg-t").textContent=text;
+var ic=$("amsg-ic");ic.textContent=good?"✓":"!";
+ic.style.background=good?"var(--soft)":"#fdecec";
+ic.style.color=good?"var(--ok)":"#d64545";
+m.hidden=false;
+}
+function sayAuth(msg,text,good){if(msg)msg.textContent=text;authAlert(text,good)}
 function setAuthBusy(on){
 ["ain","aup","agoogle","ae","ap"].forEach(function(id){var el=$(id);if(el)el.disabled=!!on});
 }
@@ -1488,25 +1510,25 @@ try{return await flight}finally{if(enterFlight===flight)enterFlight=null}
 async function authGo(signUp){
 var email=($("ae").value||"").trim(),password=$("ap").value||"",msg=$("am");
 msg.className="note";
-if(!window.sb){msg.textContent="Still connecting. Try again in a moment.";return}
-if(!email||!password){msg.textContent="Enter your email and password.";return}
-if(password.length<6){msg.textContent="Use at least 6 characters for the password.";return}
+if(!window.sb){sayAuth(msg,"Still connecting. Try again in a moment.");return}
+if(!email||!password){sayAuth(msg,"Enter your email and password.");return}
+if(password.length<6){sayAuth(msg,"Use at least 6 characters for the password.");return}
 setAuthBusy(true);
 msg.textContent=signUp?"Creating your account…":"Signing in…";
 var res=signUp?await window.sb.auth.signUp({email:email,password:password,options:{emailRedirectTo:location.href.split("#")[0]}}):await window.sb.auth.signInWithPassword({email:email,password:password});
-if(res.error){setAuthBusy(false);msg.textContent=res.error.message;return}
-if(signUp&&!(res.data&&res.data.session)){setAuthBusy(false);msg.textContent="Check your email and confirm the account, then sign in.";return}
-if(res.data&&res.data.session){var set=await window.sb.auth.setSession({access_token:res.data.session.access_token,refresh_token:res.data.session.refresh_token});if(set.error){setAuthBusy(false);msg.textContent=set.error.message;return}sbUser=res.data.session.user}
+if(res.error){setAuthBusy(false);sayAuth(msg,res.error.message);return}
+if(signUp&&!(res.data&&res.data.session)){setAuthBusy(false);sayAuth(msg,"Account created! Check your email and confirm the account, then sign in.",true);return}
+if(res.data&&res.data.session){var set=await window.sb.auth.setSession({access_token:res.data.session.access_token,refresh_token:res.data.session.refresh_token});if(set.error){setAuthBusy(false);sayAuth(msg,set.error.message);return}sbUser=res.data.session.user}
 await enterApp();
 }
 async function authGoogle(){
 var msg=$("am");
 msg.className="note";
-if(!window.sb){msg.textContent="Still connecting. Try again in a moment.";return}
+if(!window.sb){sayAuth(msg,"Still connecting. Try again in a moment.");return}
 setAuthBusy(true);
 msg.textContent="Opening Google…";
 var res=await window.sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:authRedirect(),queryParams:{prompt:"select_account"}}});
-if(res.error){setAuthBusy(false);msg.textContent=googleAuthMessage(res.error);return}
+if(res.error){setAuthBusy(false);sayAuth(msg,googleAuthMessage(res.error));return}
 setTimeout(function(){if($("auth")&&!$("auth").hidden&&!$("auth").classList.contains("auth-wait"))setAuthBusy(false)},2500);
 }
 async function signOut(){
@@ -1517,6 +1539,8 @@ showAuth("Signed out.");
 function bindAuth(){
 if(window.authBound)return;
 window.authBound=true;
+$("amsg-ok").onclick=function(){$("amsg").hidden=true};
+$("amsg").addEventListener("click",function(e){if(e.target===$("amsg"))$("amsg").hidden=true});
 $("ain").onclick=function(){authGo(false)};
 $("aup").onclick=function(){authGo(true)};
 $("agoogle").onclick=function(){authGoogle()};
@@ -1543,7 +1567,7 @@ setAuthWait(true,"Checking your account…");
 var oauthNote=readOAuthError();
 var res=await window.sb.auth.getSession();
 clearAuthParams();
-if(res.error||!res.data.session){showAuth(oauthNote||"Sign in with Google or email. A new email account needs a confirmation email before the first sign-in.");return}
+if(res.error||!res.data.session){showAuth(oauthNote||"Sign in with Google or email. A new email account needs a confirmation email before the first sign-in.");if(oauthNote)authAlert(oauthNote);return}
 sbUser=res.data.session.user;
 await enterApp();
 }
