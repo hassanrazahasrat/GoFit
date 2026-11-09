@@ -1,39 +1,33 @@
-import { useCallback, useEffect, useRef } from 'react';
-import { AppState, Platform } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { StatusBar } from 'expo-status-bar';
-import { fetchHealthData } from '../services/health';
+import { fetchHealthData, type HealthPayload } from '../services/health';
 
 const GOFIT_URL = 'https://waqasali-dev1.github.io/GoFit';
-const SYNC_INTERVAL_MS = 10 * 60 * 1000;
 
 export default function App() {
   const webViewRef = useRef<any>(null);
-  const pageReady = useRef(false);
+  const [pageReady, setPageReady] = useState(false);
+  const [healthData, setHealthData] = useState<HealthPayload | null>(null);
 
-  const syncHealth = useCallback(async () => {
-    if (!pageReady.current) return;
-    const data = await fetchHealthData();
-    if (!data) return;
-    const hasData =
-      Object.keys(data.steps).length > 0 || data.weight || data.workouts.length > 0;
-    if (!hasData) return;
-    webViewRef.current?.injectJavaScript(
-      `window.__gofitHealth&&window.__gofitHealth(${JSON.stringify(data)});true;`,
-    );
+  useEffect(() => {
+    fetchHealthData().then(setHealthData);
   }, []);
 
   useEffect(() => {
-    syncHealth();
-    const interval = setInterval(syncHealth, SYNC_INTERVAL_MS);
-    const sub = AppState.addEventListener('change', (s) => {
-      if (s === 'active') syncHealth();
-    });
-    return () => {
-      clearInterval(interval);
-      sub.remove();
-    };
-  }, [syncHealth]);
+    if (pageReady && healthData) {
+      const hasData =
+        Object.keys(healthData.steps).length > 0 ||
+        healthData.weight ||
+        healthData.workouts.length > 0;
+      if (hasData) {
+        webViewRef.current?.injectJavaScript(
+          `window.__gofitHealth&&window.__gofitHealth(${JSON.stringify(healthData)});true;`,
+        );
+      }
+    }
+  }, [healthData, pageReady]);
 
   return (
     <>
@@ -67,9 +61,7 @@ export default function App() {
           true;
         `}
         onLoadEnd={() => {
-          pageReady.current = true;
-          // Give the page a moment to boot, then push health data
-          setTimeout(syncHealth, 1500);
+          setPageReady(true);
         }}
         onShouldStartLoadWithRequest={() => true}
       />
