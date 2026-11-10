@@ -208,13 +208,6 @@ body.quiz{padding-bottom:28px}
 #agoogle{width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 16px;border-radius:16px;border:0;background:var(--bg);color:var(--tx);font:inherit;font-size:15px;font-weight:800;cursor:pointer;box-shadow:inset 0 0 0 1px var(--ln)}
 #agoogle svg{width:18px;height:18px;flex:none}
 #agoogle:disabled{opacity:.45;cursor:default}
-#auth.auth-wait .auth-form{display:none}
-#auth:not(.auth-wait) .auth-load{display:none}
-.auth-load{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px 12px 10px;text-align:center}
-.auth-spin{width:36px;height:36px;border-radius:50%;border:3px solid var(--ln);border-top-color:var(--ac);animation:auth-spin .7s linear infinite}
-@keyframes auth-spin{to{transform:rotate(360deg)}}
-#auth.auth-wait h1,#auth.auth-wait .sub{text-align:center}
-#auth.auth-wait #am{text-align:center;font-size:14px;font-weight:700;color:var(--tx)}
 .auth-links{margin-top:16px;text-align:center;font-size:13px}
 .auth-links a{color:var(--mut);font-weight:700;text-decoration:none}
 .auth-links a:hover{color:var(--ac)}
@@ -232,14 +225,21 @@ body.quiz{padding-bottom:28px}
 #pwa-bar span{flex:1;min-width:0}
 #pwa-bar button{font:inherit;font-weight:700;cursor:pointer;border-radius:10px;padding:9px 14px;border:0;background:var(--ac);color:var(--on)}
 #pwa-bar button.x{background:transparent;color:var(--mut);padding:6px 8px;font-weight:400}
+#gload{position:fixed;inset:0;z-index:9990;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;background:rgba(8,9,12,.62);overflow:hidden}
+body:has(#gload:not([hidden])){overflow:hidden}
+#gload[hidden]{display:none}
+#gload img{width:min(210px,50vw);height:auto;border-radius:22px;filter:drop-shadow(0 16px 36px rgba(0,0,0,.28))}
+#gload-t{font-size:14px;font-weight:700;color:var(--tx);text-align:center;max-width:320px}
+#gload::after{content:"";position:absolute;inset:-45%;background:linear-gradient(115deg,transparent 44%,rgba(255,255,255,.14) 50%,transparent 56%);animation:gload-sheen 3s linear infinite;pointer-events:none}
+@keyframes gload-sheen{to{transform:translateX(42%)}}
+@media (prefers-reduced-motion:reduce){#gload::after{animation:none}}
 </style>
 </head><body class="quiz">
-<div class="w auth-wait" id="auth">
+<div class="w" id="auth">
 <div class="kicker">GoFit</div>
-<h1 id="auth-title">Loading</h1>
-<div class="sub" id="auth-sub">Checking your account…</div>
+<h1 id="auth-title">Your account</h1>
+<div class="sub" id="auth-sub">Sign in to load your profile, workouts, meals and measurements.</div>
 <div class="card">
-<div class="auth-load" aria-hidden="true"><div class="auth-spin" aria-hidden="true"></div></div>
 <div class="auth-form">
 <div class="fld"><div><label for="ae">Email</label><input id="ae" type="email" autocomplete="username" placeholder="you@email.com" disabled></div><div><label for="ap">Password</label><input id="ap" type="password" autocomplete="current-password" placeholder="At least 6 characters" disabled></div></div>
 <div class="act"><button id="ain" class="p" type="button" disabled>Sign in</button><button id="aup" type="button" disabled>Create account</button></div>
@@ -618,6 +618,7 @@ $("build").textContent=qstep<2?"Next":(S.q?"Update my plan":"Build my plan");
 }
 function showQuiz(){
 qstep=0;
+var gl0=$("gload");if(gl0)gl0.hidden=true;
 document.title="Let's customise it for your gym";
 document.body.classList.add("quiz");
 $("auth").hidden=true;
@@ -1094,11 +1095,9 @@ function setAuthBusy(on){
 ["ain","aup","agoogle","ae","ap"].forEach(function(id){var el=$(id);if(el)el.disabled=!!on});
 }
 function setAuthWait(on,msg){
-var auth=$("auth"),load=auth&&auth.querySelector(".auth-load");
+var auth=$("auth"),gl=$("gload");
 if(auth)auth.classList.toggle("auth-wait",!!on);
-if(load){load.setAttribute("aria-hidden",on?"false":"true");load.setAttribute("aria-busy",on?"true":"false")}
-if($("auth-title"))$("auth-title").textContent=on?"Loading":"Your account";
-if($("auth-sub"))$("auth-sub").textContent=on?"Getting your account ready.":"Sign in to load your profile, workouts, meals and measurements.";
+if(gl){gl.hidden=!on;if(on&&msg){var gt=$("gload-t");if(gt)gt.textContent=msg}}
 if(msg&&$("am"))$("am").textContent=msg;
 setAuthBusy(!!on);
 document.title=on?"Loading · GoFit":"Sign in · GoFit";
@@ -1503,12 +1502,14 @@ async function enterApp(){
 if(enterFlight)return enterFlight;
 var flight=(async function(){
 setAuthWait(true,"Loading your account…");
+if(validQ(S.q)){try{showApp()}catch(e){}}
 try{await pullCloud()}catch(err){lastCloudError=(err&&err.message)||"Could not load your account.";if(err&&err.auth){showAuth(lastCloudError);return}}
 try{await loadLibraries()}catch(err){}
 sv();
 if(S.p)dp=copyP(S.p);
 if(S.q)draft=copyQ(S.q);
 if(validQ(S.q))showApp();else showQuiz();
+var gl=$("gload");if(gl)gl.hidden=true;
 })();
 enterFlight=flight;
 try{return await flight}finally{if(enterFlight===flight)enterFlight=null}
@@ -1578,6 +1579,7 @@ sbUser=res.data.session.user;
 await enterApp();
 }
 function bootCloud(){
+if(validQ(S.q)){try{showApp()}catch(e){}}
 setAuthWait(true,"Connecting…");
 function go(){if(window.sb)startGoFit()}
 if(window.sb)go();
@@ -1649,6 +1651,7 @@ await window.sb.from("workout_sessions").insert({user_id:sbUser.id,workout_name:
 }
 </script>
 <div id="pwa-bar" hidden role="status"><span id="pwa-msg"></span><button type="button" id="pwa-go"></button><button type="button" class="x" id="pwa-x" aria-label="Dismiss">✕</button></div>
+<div id="gload" hidden role="status" aria-live="polite"><img src="icons/GoFitLoadingSequence.gif" alt="Loading GoFit"><div id="gload-t">Loading…</div></div>
 <script>
 (function(){
   var tc=document.getElementById("tc"),root=document.documentElement;
