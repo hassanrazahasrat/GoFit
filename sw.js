@@ -1,6 +1,6 @@
 /* GoFit service worker: works offline after the first visit.
    Bump VERSION whenever you upload a new index.html so phones refresh the cache. */
-const VERSION = "gofit-v66";
+const VERSION = "gofit-v67";
 const CORE = [
   "./",
   "index.html",
