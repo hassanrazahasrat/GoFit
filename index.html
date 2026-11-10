@@ -1534,10 +1534,29 @@ msg.className="note";
 if(!window.sb){sayAuth(msg,"Still connecting. Try again in a moment.");return}
 setAuthBusy(true);
 msg.textContent="Opening Google…";
+if(window.ReactNativeWebView&&window.__GOFIT_APP__){
+window.ReactNativeWebView.postMessage(JSON.stringify({type:"gofit:google-signin"}));
+return;
+}
 var res=await window.sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:authRedirect(),queryParams:{prompt:"select_account"}}});
 if(res.error){setAuthBusy(false);sayAuth(msg,googleAuthMessage(res.error));return}
 setTimeout(function(){if($("auth")&&!$("auth").hidden&&!$("auth").classList.contains("auth-wait"))setAuthBusy(false)},2500);
 }
+window.__gofitNativeGoogle=async function(payload){
+var msg=$("am");
+if(!payload||payload.error||!payload.idToken){
+setAuthBusy(false);
+if(payload&&payload.error&&payload.error!=="cancelled"&&payload.error!=="native-google-not-configured")sayAuth(msg,"Google sign-in could not be completed. Try again.");
+if(msg)msg.textContent=payload&&payload.error==="native-google-not-configured"?"Google sign-in is not configured in this build yet.":"";
+return;
+}
+if(!window.sb){setAuthBusy(false);sayAuth(msg,"Still connecting. Try again in a moment.");return}
+if(msg)msg.textContent="Signing in…";
+var res=await window.sb.auth.signInWithIdToken({provider:"google",token:payload.idToken});
+if(res.error){setAuthBusy(false);sayAuth(msg,googleAuthMessage(res.error));return}
+if(res.data&&res.data.session){sbUser=res.data.session.user}
+await enterApp();
+};
 async function signOut(){
 if(window.sb)await window.sb.auth.signOut();
 sbUser=null;

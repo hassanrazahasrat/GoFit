@@ -9,8 +9,11 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.wa797789.mobile-app",
-      "appleTeamId": "A9MV4WYJPA"
+      "bundleIdentifier": "com.gofitgym",
+      "appleTeamId": "A9MV4WYJPA",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.gofitgym",
