@@ -4,7 +4,7 @@
 <meta name="theme-color" content="#e7f6f2">
 <title>Delete Account — GoFit</title>
 <style>
-:root{--bg:#e7f4ef;--card:#fff;--tx:#17202b;--mut:#7d8796;--ac:#0e9f8a;--on:#fff;--ln:#e7edf3;--soft:#e7f6f2;--field:#f4f7f8;--sh:0 12px 32px rgba(40,70,80,.08)}
+:root{--bg:#e7f4ef;--card:#fff;--tx:#17202b;--mut:#7d8796;--ac:#0e9f8a;--on:#fff;--ln:#e7edf3;--soft:#e7f6f2;--field:#f4f7f8;--sh:0 12px 32px rgba(40,70,80,.08);--ok:#12a36a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 ui-rounded,"Avenir Next","Segoe UI",system-ui,sans-serif}
 .w{max-width:720px;margin:0 auto;padding:24px 16px 64px}
 h1{font-size:28px;margin:8px 0 4px}.kicker{color:var(--ac);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
@@ -12,10 +12,15 @@ h1{font-size:28px;margin:8px 0 4px}.kicker{color:var(--ac);font-weight:800;font-
 .card{background:var(--card);border-radius:20px;padding:18px 20px;margin-bottom:14px;box-shadow:var(--sh)}
 .card h2{margin:0 0 8px;font-size:17px}
 .card p,.card li{margin:0 0 8px;color:var(--tx);font-size:14.5px}
-.card ol{margin:0;padding-left:20px}
-.card a{color:var(--ac);font-weight:700}
-.btn{display:inline-block;margin-top:6px;padding:12px 18px;border-radius:14px;background:var(--ac);color:var(--on);font-weight:800;text-decoration:none;font-size:14px}
+.card ul{margin:0;padding-left:20px}
+.card a:not(.btn){color:var(--ac);font-weight:700}
+.btn{display:inline-block;margin-top:6px;padding:12px 18px;border-radius:14px;background:var(--ac);color:var(--on);font-weight:800;text-decoration:none;font-size:14px;border:0;cursor:pointer;width:100%;text-align:center;font-family:inherit}
+.btn[disabled]{opacity:.5;cursor:default}
+.btn.danger{background:#d64545}
 .note{color:var(--mut);font-size:13px}
+.okbox{display:none;text-align:center;padding:14px 0}
+.okbox.show{display:block}
+.okbox .tick{width:56px;height:56px;border-radius:50%;background:var(--soft);color:var(--ok);display:grid;place-items:center;font-size:28px;font-weight:900;margin:0 auto 10px}
 .foot{margin-top:28px;text-align:center}.foot a{color:var(--ac);font-weight:700;text-decoration:none;margin:0 8px}
 </style>
 </head>
@@ -23,30 +28,68 @@ h1{font-size:28px;margin:8px 0 4px}.kicker{color:var(--ac);font-weight:800;font-
 <div class="w">
 <div class="kicker">GoFit</div>
 <h1>Delete your account &amp; data</h1>
-<div class="sub">You can request deletion of your GoFit account and all associated data at any time.</div>
+<div class="sub">Request permanent deletion of your GoFit account and all associated data.</div>
 
-<div class="card"><h2>What gets deleted</h2>
+<div class="card" id="signed-out-card" hidden>
+<h2>You're not signed in here</h2>
+<p>Account deletion requests must come from a signed-in session so we can verify it's really your account. Sign in to GoFit first, then come back to this page — or if you can't access the account anymore, open a <a href="https://github.com/waqasali-dev1/GoFit/issues/new?title=Account%20deletion%20request">GitHub issue</a> from the email you signed up with.</p>
+<a class="btn" href="index.html">Go to sign in</a>
+</div>
+
+<div id="flow" hidden>
+<div class="card">
+<h2>What gets deleted</h2>
 <p>When your request is processed we permanently remove:</p>
-<ul style="margin:0;padding-left:20px">
+<ul>
 <li>Your account credentials and sign-in identity</li>
 <li>Your profile details (name, age, sex, height, weight, goals)</li>
 <li>Workout plans, sessions, exercises, sets and personal records</li>
 <li>Nutrition logs, meal plans and water/step history</li>
 <li>Weight, measurements and any synced health data</li>
 </ul>
-<p class="note">Data stored only on your device (if you never signed in) is removed by uninstalling the app or clearing the site's data in your browser settings.</p></div>
+<p class="note">Data stored only on your device (if you never signed in) is removed by uninstalling the app or clearing the site's data in your browser settings.</p>
+</div>
 
-<div class="card"><h2>How to request deletion</h2>
-<ol>
-<li>Open a new issue on our <a href="https://github.com/waqasali-dev1/GoFit/issues/new?title=Account%20deletion%20request">GitHub repository</a> titled "Account deletion request".</li>
-<li>Include the email address you used to sign up for GoFit so we can locate your account.</li>
-<li>We will confirm and complete the deletion, usually within 7 days.</li>
-</ol>
-<a class="btn" href="https://github.com/waqasali-dev1/GoFit/issues/new?title=Account%20deletion%20request">Request deletion on GitHub</a></div>
+<div class="card" id="request-card">
+<h2>Request deletion</h2>
+<p>Signed in as <b id="who"></b>. Submitting sends a deletion request to our team — we'll confirm and process it, usually within 7 days. This cannot be undone.</p>
+<div class="okbox" id="done-box">
+<div class="tick">✓</div>
+<p><b>Request received.</b> We'll delete your account and data within 7 days. You can keep using the app until then — sign out anytime from the You tab.</p>
+</div>
+<button class="btn danger" id="req-btn" type="button">Request account deletion</button>
+<p class="note" id="req-note" style="margin-top:10px"></p>
+</div>
 
-<div class="card"><h2>Before you delete</h2>
-<p>If you only want to sign out or remove the app from one device, use <b>Sign out</b> on the You tab — your cloud data stays safe and you can sign back in anytime. Account deletion is permanent and cannot be undone.</p></div>
+<div class="card">
+<h2>Changed your mind?</h2>
+<p>If you only want to sign out or remove the app from one device, use <b>Sign out</b> on the You tab — your cloud data stays safe and you can sign back in anytime.</p>
+</div>
+</div>
 
 <div class="foot"><a href="index.html">Back to GoFit</a><a href="privacy.html">Privacy Policy</a><a href="terms.html">Terms</a></div>
 </div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const sb = createClient('https://gslnyqjnaygjrxjwoejn.supabase.co','sb_publishable_DlFiKLRLw8Io8ZZ9_oN_Fg_iJ1_w-co');
+const $=id=>document.getElementById(id);
+const { data } = await sb.auth.getSession();
+const user = data && data.session && data.session.user;
+if (!user) { $('signed-out-card').hidden = false; }
+else {
+  $('flow').hidden = false;
+  $('who').textContent = user.email || 'your account';
+  $('req-btn').onclick = async () => {
+    const btn = $('req-btn'), note = $('req-note');
+    btn.disabled = true; note.textContent = 'Sending request…';
+    const { error } = await sb.from('deletion_requests').insert({ user_id: user.id, email: user.email || null });
+    if (error) { btn.disabled = false; note.textContent = 'Could not send the request: ' + error.message + ' — please try again or open a GitHub issue.'; return; }
+    $('request-card').querySelector('h2').textContent = 'Request sent';
+    btn.style.display = 'none';
+    $('done-box').classList.add('show');
+    note.textContent = '';
+  };
+}
+</script>
 </body></html>
