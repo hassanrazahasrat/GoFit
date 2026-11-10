@@ -1559,7 +1559,9 @@ return;
 }
 if(!window.sb){setAuthBusy(false);sayAuth(msg,"Still connecting. Try again in a moment.");return}
 if(msg)msg.textContent="Signing in…";
-var res=await window.sb.auth.signInWithIdToken({provider:"google",token:payload.idToken});
+var nonce;
+try{var seg=payload.idToken.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"),claims=JSON.parse(atob(seg+"===".slice((seg.length+3)%4)));nonce=claims.nonce||undefined}catch(e){}
+var res=await window.sb.auth.signInWithIdToken({provider:"google",token:payload.idToken,nonce:nonce});
 if(res.error){setAuthBusy(false);sayAuth(msg,(res.error.message||"")+" "+googleAuthMessage(res.error));return}
 if(res.data&&res.data.session){sbUser=res.data.session.user}
 await enterApp();
