@@ -15,7 +15,7 @@
     "android": {
       "package": "com.gofitgym",
       "adaptiveIcon": {
-        "backgroundColor": "#E7F6F2",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -34,7 +34,7 @@
         {
           "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#E7F6F2"
+          "backgroundColor": "#FFFFFF"
         }
       ],
       "@react-native-google-signin/google-signin",
