@@ -653,14 +653,14 @@ var DEMO3D={lat:1,press:1,ipress:1,ohp:1,dips:1,push:1,pushup:1,ipush:1,dpush:1,
 function use3d(anim,name){
 if(DEMO3D[anim])return 1;
 var n=String(name||"").toLowerCase();
-return n.indexOf("push-up")>=0||n.indexOf("push up")>=0||n.indexOf("shoulder tap")>=0||/^(barbell row|lat pulldown|incline barbell press|cable fly|rope pushdown|ez-bar curl|hammer curl|assisted dip|back squat|hack squat or back squat|romanian deadlift|seated leg curl|standing calf raise|calf raises|seated db shoulder press|seated dumbbell shoulder press|dumbbell lateral raise|db lateral raise|face pull|cable crunch|incline machine press|chest-supported row|chest-supported dumbbell row|inverted row|water-bottle curl$|backpack goblet squat$|backpack romanian deadlift$|glute bridge$|prone y raise$|dead bug$|water-bottle lateral raise$|one-arm backpack row$|(db|dumbbell) curl$|(db|dumbbell) romanian deadlift$|((db|dumbbell) )?goblet squat$|(db|dumbbell) leg curl$|standing (db|dumbbell) calf raise$|weighted crunch$|rear-delt ((db|dumbbell) )?fly(, elbows high)?$|bent-over (water-bottle )?rear-delt raise$|weighted dips?$|(barbell )?bench press$|straight-arm pulldown$|hanging knee raise$|leg extension$|side plank$|walking lunge$|seated cable row$|plank$|(db|dumbbell) bench press$|one-arm (db|dumbbell) row$|lying leg raise$|reverse lunge$|(db|dumbbell) pullover$|step-?up$|(pull-?up or assisted pull-?up|(band-)?assisted pull-?up|weighted pull-?up|neutral-grip pull-?up|chin-?up|pull-?up)$)/.test(n);
+return n.indexOf("push-up")>=0||n.indexOf("push up")>=0||n.indexOf("shoulder tap")>=0||/^(barbell row|lat pulldown|incline barbell press|cable fly|rope pushdown|ez-bar curl|hammer curl|assisted dip|back squat|hack squat or back squat|romanian deadlift|seated leg curl|standing calf raise|calf raises|seated db shoulder press|seated dumbbell shoulder press|dumbbell lateral raise|db lateral raise|face pull|cable crunch|incline machine press|chest-supported row|chest-supported dumbbell row|inverted row|water-bottle curl$|backpack goblet squat$|backpack romanian deadlift$|glute bridge$|hip thrust|backpack pullover|concentration curl|prone y raise$|dead bug$|water-bottle lateral raise$|one-arm backpack row$|(db|dumbbell) curl$|(db|dumbbell) romanian deadlift$|((db|dumbbell) )?goblet squat$|(db|dumbbell) leg curl$|standing (db|dumbbell) calf raise$|weighted crunch$|rear-delt ((db|dumbbell) )?fly(, elbows high)?$|bent-over (water-bottle )?rear-delt raise$|weighted dips?$|(barbell )?bench press$|straight-arm pulldown$|hanging knee raise$|leg extension$|side plank$|walking lunge$|seated cable row$|plank$|(db|dumbbell) bench press$|one-arm (db|dumbbell) row$|lying leg raise$|reverse lunge$|(db|dumbbell) pullover$|step-?up$|(pull-?up or assisted pull-?up|(band-)?assisted pull-?up|weighted pull-?up|neutral-grip pull-?up|chin-?up|pull-?up)$)/.test(n);
 }
 var trainDemo=null,trainDemoToken=0;
 function releaseTrainDemo(){trainDemoToken++;if(trainDemo){trainDemo.dispose();trainDemo=null}}
 function mountTrainDemo(){
 var host=$("demo3d");if(!host||trainDemo)return;
 var key=host.dataset.demo,name=host.dataset.name||"",token=++trainDemoToken;
-import("./js/exercises/registry.js?v=core17").then(function(mod){
+import("./js/exercises/registry.js?v=core19").then(function(mod){
 var live=$("demo3d");
 if(token!==trainDemoToken||!live||live.dataset.demo!==key||(live.dataset.name||"")!==name)return;
 var spec=mod.exerciseDemo(key,name);
@@ -686,7 +686,7 @@ $("list").innerHTML=day.e.map(function(e,j){
 var k=S.d+"-"+j,c=S.c[k]||[];
 tot+=e[1];dn+=c.filter(Boolean).length;
 var all=c.filter(Boolean).length==e[1];
-return '<div class="card ex'+(all?" done":"")+'"><div class="exh"><span class="exn">'+(j+1)+'</span><div><h3>'+esc(e[0])+'</h3><div class="meta">'+e[1]+" sets · "+esc(e[2])+" · "+restLabel(e[3])+" rest</div></div></div>"+setsHtml(e[0],k,e[1],c,e[3])+'<div class="note">'+esc(e[4])+'</div><div class="mvr"><button type="button" class="mv" data-m="'+k+'">'+(O==k?"Hide demo":"Demo &amp; muscles")+'</button><button type="button" class="mv" data-h="'+k+'">'+(HO[k]?"Hide steps":"How to do it")+'</button></div>'+(HO[k]?hw(M[S.d][j].split("|")[0]):"")+(O==k?pn(S.d,j):"")+"</div>";
+return '<div class="card ex'+(all?" done":"")+'"><div class="exh"><span class="exn">'+(j+1)+'</span><div><h3>'+esc(e[0])+'</h3><div class="meta">'+e[1]+" sets · "+esc(e[2])+" · "+restLabel(e[3])+" rest</div></div></div>"+setsHtml(e[0],k,e[1],c,e[3])+'<div class="note">'+esc(e[4])+'</div><div class="mvr"><button type="button" class="mv" data-m="'+k+'">'+(O==k?"Hide demo":"Demo &amp; muscles")+'</button><button type="button" class="mv" data-h="'+k+'">'+(HO[k]?"Hide steps":"How to do it")+'</button></div>'+(HO[k]?hw(M[S.d][j].split("|")[0],D[S.d].e[j][0]):"")+(O==k?pn(S.d,j):"")+"</div>";
 }).join("");
 $("pb").style.width=(tot?dn/tot*100:0)+"%";
 if(O){if($("demo3d"))mountTrainDemo();else if($("av"))an(M[S.d][+O.split("-")[1]].split("|")[0])}else cancelAnimationFrame(raf);
@@ -996,8 +996,9 @@ splank:["Lie on your side with your forearm on the floor under your shoulder and
 lcr:["Lie on your back with your knees bent and your feet flat, hands behind your head or holding a weight on your chest.","Curl your shoulders off the floor by squeezing your abs.","Lower slowly without pulling on your neck."],
 bridge:["Lie on your back with your knees bent and your feet flat, close to your glutes. Keep your head, arms and feet still.","Push through your heels to lift your hips until your body is a straight line from shoulders to knees. Squeeze your glutes and hold for 2 seconds.","Lower your hips slowly back to the floor."],
 bicy:["Lie on your back with your hands behind your head.","Bring one knee in and turn the opposite shoulder toward it while the other leg extends.","Switch sides slowly."],
-prony:["Lie face down with your arms forward in a Y shape.","Lift your arms off the floor, squeezing your shoulder blades together.","Lower slowly."]};
-function hw(t){var s=HW[t];return s?'<div class="how"><ol>'+s.map(function(x){return "<li>"+esc(x)+"</li>"}).join("")+"</ol></div>":""}
+prony:["Lie face down with your arms forward in a Y shape.","Lift your arms off the floor, squeezing your shoulder blades together.","Lower slowly."] ,
+hipthrust:["Sit on the floor with your upper back resting on a bench and the bar across your hip crease. Bend your knees and plant your feet flat about hip-width apart.","Brace your core, tuck your ribs and grip the bar just outside your hips.","Drive through your heels and thrust your hips up until your body is a straight line from shoulders to knees, then lower slowly."]};
+function hw(t,name){var s=HW[name&&/hip thrust/i.test(name)?"hipthrust":t];return s?'<div class="how"><ol>'+s.map(function(x){return "<li>"+esc(x)+"</li>"}).join("")+"</ol></div>":""}
 function st(i,o){var e=$(i);if(e)for(var k in o)e.setAttribute(k,o[k])}
 function demoHost(key, name){
 return '<div class="stage3d"><div class="demo3d" id="demo3d" data-demo="'+esc(key)+'" data-name="'+esc(name)+'"></div></div>';
