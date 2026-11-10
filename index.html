@@ -92,7 +92,7 @@ input{width:84px;padding:12px 14px;border:0;border-radius:16px;background:var(--
 #t b{font-size:22px;font-variant-numeric:tabular-nums;min-width:64px}#t button{padding:9px 14px;border-radius:999px;border:0;background:var(--field);color:var(--tx);font-weight:800}
 #t.go b{color:var(--ac)}#t.end b{color:var(--ok)}
 .mv{margin-top:8px;width:100%;padding:12px;border-radius:16px;border:0;background:var(--field);color:var(--tx);font-weight:800;font-size:13px;box-shadow:inset 0 0 0 1px var(--ln)}.mvp{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.mvp svg{background:#101010;border-radius:18px}.mvp .av{flex:1 1 52%;min-width:160px}.bd{display:flex;flex:1 1 40%;gap:8px;min-width:140px}.bd svg{flex:1;min-width:0;height:auto;background:#101010;border-radius:18px}#av{stroke:#E8EAED;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;fill:none}#av .fl,#av .pr *{stroke:#8A8F98;stroke-width:2}#av circle#eq{fill:var(--ac);stroke:none}.sil{fill:#202024;stroke:#34343A;stroke-linecap:round}.hp{fill:#00B4FF}.hs{fill:#7FD4FF;opacity:.55}
-.chips{display:flex;gap:4px;margin:8px 0;background:var(--field);padding:4px;border-radius:999px}.chips button{flex:1;padding:10px 8px;border:0;background:transparent;color:var(--tx);border-radius:999px;font-size:13px;font-weight:800}.chips button.on{background:var(--ac);color:var(--on)}.mini{padding:12px 16px;border-radius:16px;border:0;background:var(--ac);color:var(--on);font-weight:800}#ud{background:transparent;color:var(--mut);box-shadow:none}
+.chips{display:flex;gap:4px;margin:8px 0;background:var(--field);padding:4px;border-radius:999px}.chips button{flex:1;padding:10px 8px;border:0;background:transparent;color:var(--tx);border-radius:999px;font-size:13px;font-weight:800}.chips button.on{background:var(--ac);color:var(--on)}.chiplbl{align-self:center;padding:0 8px 0 6px;font-size:11px;font-weight:800;color:var(--mut);white-space:nowrap}.mini{padding:12px 16px;border-radius:16px;border:0;background:var(--ac);color:var(--on);font-weight:800}#ud{background:transparent;color:var(--mut);box-shadow:none}
 #viewm .card>.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}#viewm .card>.row input,#viewm .card>.row .mini{width:100%}
 .qopt{display:flex;flex-direction:column;gap:8px}
 .qopt button{text-align:left;padding:14px 16px;border-radius:18px;border:0;background:var(--field);color:var(--tx);font:inherit;font-weight:750;font-size:15px;cursor:pointer}
@@ -794,9 +794,8 @@ function rotateMeals(){
 var w=planClock().week;
 if(S.mealLock===w||typeof MS==="undefined")return;
 S.mp=S.mp||{};
-var diet=!!S.vg;
 MS.forEach(function(sl,i){
-var list=sl.o.filter(function(o){return !diet||o.v});
+var list=mealList(sl);
 if(!list.length)return;
 S.mp[sl.k]=list[(w-1+i)%list.length].id;
 });
@@ -820,8 +819,12 @@ renderShell();
 /*MEALS*/
 var F={chk:["Chicken breast",165,31,0,3.6],egg:["Whole eggs",143,12.6,.7,9.5,"egg",50],ewh:["Egg whites",52,11,.7,.2],gy:["Greek yogurt (plain, 0%)",59,10,3.6,.4],tun:["Tuna (canned in water)",116,26,0,1],sal:["Salmon",206,22,0,12],bef:["Lean beef (cooked)",200,27,0,10],cot:["Low-fat cottage cheese",72,12,3.4,1],whe:["Whey protein powder",400,80,8,6],tof:["Firm tofu",144,17,3,9],cod:["White fish (cod)",105,23,0,.9],tur:["Turkey breast",135,30,0,1],oat:["Rolled oats (dry)",389,17,66,7],ric:["Rice (cooked)",130,2.7,28,.3],swp:["Sweet potato",90,2,21,.1],pot:["Potatoes (boiled)",87,1.9,20,.1],brd:["Whole-wheat bread",250,12,43,3.5,"slice",35],pas:["Pasta (cooked)",158,5.8,31,.9],qui:["Quinoa (cooked)",120,4.4,21,1.9],ban:["Banana",89,1.1,23,.3,"banana",120],wrp:["Whole-wheat wrap",300,9,50,7,"wrap",60],cou:["Couscous (cooked)",112,3.8,23,.2],app:["Apple",52,.3,14,.2,"apple",180],ber:["Berries",57,.7,14,.3],dat:["Dates",282,2.5,75,.4,"date",8],len:["Lentils (cooked)",116,9,20,.4]};
 var LM={whe:[15,50],egg:[50,400],ewh:[60,400],gy:[100,400],cot:[80,300],tun:[30,250],dat:[16,80],ban:[60,240],app:[90,450],wrp:[60,180],brd:[35,245],ber:[50,350]};
-var X={av:["Avocado","½ small (50 g)",80,1,4,7],oil:["Olive oil","1 tbsp (14 g)",119,0,0,13.5],alm:["Almonds","20 g",116,4,4,10],veg:["Salad or cooked vegetables","150 g",35,2,7,.3],bn:["Banana","1 medium (120 g)",107,1,28,.4]};
-function mo(id,n,i,P,C,x,v,tip){return {id:id,n:n,i:i,P:P,C:C,x:x,v:v,tip:tip}}
+var X={av:["Avocado","½ small (50 g)",80,1,4,7],oil:["Olive oil","1 tbsp (14 g)",119,0,0,13.5],alm:["Almonds","20 g",116,4,4,10],veg:["Salad or cooked vegetables","150 g",35,2,7,.3],bn:["Banana","1 medium (120 g)",107,1,28,.4],curd:["Curd or yogurt","150 g",90,5,8,4],gh:["Ghee or oil","1 tsp (5 g)",45,0,0,5]};
+function mo(id,n,i,P,C,x,v,tip,r){return {id:id,n:n,i:i,P:P,C:C,x:x,v:v,tip:tip,r:r||"intl"}}
+function cuisineOk(o){var p=S.cuisine||"all";return p==="all"||(o.r||"intl")===p}
+function mealOk(o){return (!S.vg||o.v)&&cuisineOk(o)}
+function mealList(sl){var l=sl.o.filter(mealOk);if(l.length)return l;return sl.o.filter(function(o){return !S.vg||o.v})}
+function fixMeals(){S.mp=S.mp||{};MS.forEach(function(sl){var list=mealList(sl);if(!list.length)return;var sel=S.mp[sl.k];if(!list.some(function(o){return o.id===sel}))S.mp[sl.k]=list[0].id})}
 var MS=[
 {k:"b",n:"Breakfast",t:"7–9 am",c:"255,150,60",kp:.24,pp:.22,o:[
 mo("b1","Eggs, toast & avocado","🍳","egg","brd",["av"],1,"Scramble or poach the eggs. Add tomato or spinach for free."),
@@ -875,15 +878,17 @@ return {t:t,r:r};
 function ml(x){
 var diet=!!S.vg,tot={k:0,p:0},body="",shop=[];
 MS.forEach(function(sl){
-var list=sl.o.filter(function(o){return !diet||o.v}),sel=S.mp&&S.mp[sl.k],cur=list.filter(function(o){return o.id===sel})[0]||list[0],b=build(cur,x.k*sl.kp,x.p*sl.pp),dn=S.ml&&S.ml[dk()]&&S.ml[dk()][sl.k];
+var list=mealList(sl),sel=S.mp&&S.mp[sl.k],cur=list.filter(function(o){return o.id===sel})[0]||list[0],b=build(cur,x.k*sl.kp,x.p*sl.pp),dn=S.ml&&S.ml[dk()]&&S.ml[dk()][sl.k];
 tot.k+=b.t.k;tot.p+=b.t.p;MP[sl.k]=[b.t.k,b.t.p,b.t.c,b.t.f];b.r.forEach(function(row){shop.push(esc(row[0])+" — "+esc(row[1]))});
-body+='<div class="meal" style="--mc:'+sl.c+'"><div class="mh"><div class="mi">'+cur.i+'</div><div><h4>'+esc(cur.n)+"</h4><small>"+esc(sl.n)+" · "+sl.t+"</small></div></div>"
+body+='<div class="meal" style="--mc:'+sl.c+'"><div class="mh"><div class="mi">'+cur.i+'</div><div><h4>'+esc(cur.n)+"</h4><small>"+esc(sl.n)+" · "+sl.t+(cur.r==="sa"?" · Desi":"")+"</small></div></div>"
 +'<div class="mm"><span class="k">'+b.t.k+" kcal</span><span>"+b.t.p+" g protein</span><span>"+b.t.c+" g carbs</span><span>"+b.t.f+" g fat</span></div>"
 +'<ul class="ing">'+b.r.map(function(r){return "<li><span>"+esc(r[0])+"</span><span>"+esc(r[1])+"</span></li>"}).join("")+'</ul><div class="tip">'+esc(cur.tip)+"</div>"
 +'<div class="alt">'+list.map(function(o){return '<button type="button" class="'+(o===cur?"on":"")+'" data-mo="'+sl.k+":"+o.id+'">'+o.i+" "+esc(o.n)+"</button>"}).join("")+"</div>"+'<button type="button" class="lg'+(dn?" on":"")+'" data-lg="'+sl.k+'">'+(dn?"Logged":"+ Log this meal")+"</button></div>";
 });
 $("msub").textContent="About "+fm(tot.k)+" kcal · "+tot.p+" g protein";
+var cui=S.cuisine||"all";
 $("ml").innerHTML='<div class="mtop"><div class="chips" style="flex:1"><button type="button" class="'+(diet?"":"on")+'" data-dt="a">All foods</button><button type="button" class="'+(diet?"on":"")+'" data-dt="v">Vegetarian</button></div></div>'
++'<div class="mtop"><div class="chips" style="flex:1"><span class="chiplbl">Cuisines</span><button type="button" class="'+(cui==="all"?"on":"")+'" data-cu="all">All</button><button type="button" class="'+(cui==="sa"?"on":"")+'" data-cu="sa">Desi</button><button type="button" class="'+(cui==="intl"?"on":"")+'" data-cu="intl">International</button></div></div>'
 +'<div class="mm" style="--mc:255,107,0"><span class="k">'+fm(tot.k)+" kcal planned</span><span>"+tot.p+" g protein</span><span>Target "+fm(x.k)+" kcal · "+x.p+" g</span></div>"+body
 +'<details class="warm"><summary>Shopping list for today</summary><div>'+(shop.length?shop.join("<br>"):"Add your details to build a list.")+'</div></details>'
 +'<div class="note">Amounts are cooked weights unless marked dry. Meals change each week. Tap any option to keep that meal for the rest of this week. Amounts re-adjust so the day still hits your numbers.</div>';
@@ -893,7 +898,8 @@ function apply(a,sign){o.k+=sign*(a[0]||0);o.p+=sign*(a[1]||0);o.c=(o.c||0)+sign
 if(g[sl]){apply(g[sl],-1);delete g[sl];ga("meal_clear",{meal:sl})}else{g[sl]=[m[0],m[1],m[2]||0,m[3]||0];apply(g[sl],1);ga("meal_log",{meal:sl})}
 sv();nd();syncMeal(sl)}
 $("ml").onclick=function(e){var b=e.target.closest("button");if(!b)return;
-if(b.dataset.dt){S.vg=b.dataset.dt==="v";ga("diet",{vegetarian:S.vg?"yes":"no"});sv();nd();pushSettings()}
+if(b.dataset.dt){S.vg=b.dataset.dt==="v";fixMeals();ga("diet",{vegetarian:S.vg?"yes":"no"});sv();nd();pushSettings()}
+else if(b.dataset.cu){S.cuisine=b.dataset.cu;fixMeals();ga("cuisine",{pref:S.cuisine});sv();nd();pushSettings()}
 else if(b.dataset.mo){var a=b.dataset.mo.split(":");S.mp=S.mp||{};S.mp[a[0]]=a[1];S.mealLock=planClock().week;ga("meal_swap",{meal:a[0]});sv();nd();pushSettings()}
 else if(b.dataset.lg)lgm(b.dataset.lg)};
 /*END*/
@@ -1228,6 +1234,7 @@ if(!S.p)S.p=copyP({});
 if(row.calorie_pace)S.p.pace=row.calorie_pace;
 if(row.clinician_review)S.p.med=row.clinician_review;
 S.vg=!!row.vegetarian;
+if(row.meal_pref==="sa"||row.meal_pref==="intl"||row.meal_pref==="all")S.cuisine=row.meal_pref;
 if(row.nutrition_day)S.n=row.nutrition_day;
 if(row.meal_choices&&typeof row.meal_choices==="object"){S.mp=Object.assign({},row.meal_choices);if(S.mp._week!=null){S.mealLock=+S.mp._week;delete S.mp._week}}
 }
@@ -1242,7 +1249,7 @@ if(r.steps!=null)S.sp[d]=+r.steps;
 async function saveSettings(){
 if(!sbUser)return;
 var choices=Object.assign({},S.mp||{});if(S.mealLock)choices._week=S.mealLock;
-var row={user_id:sbUser.id,days:S.q&&S.q.days||null,train_goal:S.q&&S.q.goal||null,session_minutes:S.q&&S.q.time||null,equipment:S.q&&S.q.equip||null,level:S.q&&S.q.level||null,calorie_pace:S.p&&S.p.pace||null,clinician_review:S.p&&S.p.med||null,vegetarian:!!S.vg,nutrition_day:S.n||null,meal_choices:choices,updated_at:new Date().toISOString()};
+var row={user_id:sbUser.id,days:S.q&&S.q.days||null,train_goal:S.q&&S.q.goal||null,session_minutes:S.q&&S.q.time||null,equipment:S.q&&S.q.equip||null,level:S.q&&S.q.level||null,calorie_pace:S.p&&S.p.pace||null,clinician_review:S.p&&S.p.med||null,vegetarian:!!S.vg,nutrition_day:S.n||null,meal_pref:S.cuisine||"all",meal_choices:choices,updated_at:new Date().toISOString()};
 var res=await window.sb.from("user_settings").upsert(row,{onConflict:"user_id"});
 if(res.error){if(isMissing(res.error))return;throw res.error}
 lastCloudError="";
@@ -1335,7 +1342,7 @@ function slotInfo(sl){
 var slot=null,i;
 for(i=0;i<MS.length;i++)if(MS[i].k===sl)slot=MS[i];
 if(!slot)return {name:"Meal",type:"Meal"};
-var list=slot.o.filter(function(o){return !S.vg||o.v}),sel=S.mp&&S.mp[sl],cur=null;
+var list=mealList(slot),sel=S.mp&&S.mp[sl],cur=null;
 for(i=0;i<list.length;i++)if(list[i].id===sel)cur=list[i];
 if(!cur)cur=list[0];
 return {name:cur?cur.n:slot.n,type:slot.n};
@@ -1448,7 +1455,7 @@ if(typeof extras==="string"){try{extras=JSON.parse(extras)}catch(e){extras=[]}}
 if(!slot||!r.protein_id||!r.carb_id||!F[r.protein_id]||!F[r.carb_id])return;
 if(slot.o.some(function(o){return o.id===r.id}))return;
 if(extras.some(function(i){return !X[i]}))return;
-slot.o.push(mo(r.id,r.title,r.emoji||"🍽️",r.protein_id,r.carb_id,extras,!!r.vegetarian,r.tip||""));
+slot.o.push(mo(r.id,r.title,r.emoji||"🍽️",r.protein_id,r.carb_id,extras,!!r.vegetarian,r.tip||"",r.region||"intl"));
 });
 }
 async function ensureProfile(){
@@ -1553,7 +1560,7 @@ return;
 if(!window.sb){setAuthBusy(false);sayAuth(msg,"Still connecting. Try again in a moment.");return}
 if(msg)msg.textContent="Signing in…";
 var res=await window.sb.auth.signInWithIdToken({provider:"google",token:payload.idToken});
-if(res.error){setAuthBusy(false);sayAuth(msg,googleAuthMessage(res.error));return}
+if(res.error){setAuthBusy(false);sayAuth(msg,(res.error.message||"")+" "+googleAuthMessage(res.error));return}
 if(res.data&&res.data.session){sbUser=res.data.session.user}
 await enterApp();
 };
