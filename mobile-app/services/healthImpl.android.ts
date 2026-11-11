@@ -29,8 +29,19 @@ export async function fetchHealthData() {
           timeRangeFilter: { operator: 'between', startTime: s.toISOString(), endTime: e.toISOString() },
           pageSize: 1000,
         });
-        const total = (res?.records || []).reduce((a: number, r: any) => a + (r.count || 0), 0);
-        if (total > 0) payload.steps[enCA(s)] = Math.round(total);
+        // Multiple apps (Samsung Health, Google Fit, etc.) can write the same
+        // steps into Health Connect — summing all records double-counts.
+        // Take the largest per-origin total instead.
+        const byOrigin: Record<string, number> = {};
+        for (const r of (res?.records || []) as any[]) {
+          const origin = r?.metadata?.dataOrigin || r?.dataOrigin || 'unknown';
+          byOrigin[origin] = (byOrigin[origin] || 0) + (r.count || 0);
+        }
+        const total = Math.max(0, ...Object.values(byOrigin));
+        if (total > 0) {
+          console.log('[gofit-health] steps', enCA(s), 'origins:', JSON.stringify(byOrigin));
+          payload.steps[enCA(s)] = Math.round(total);
+        }
       } catch {}
     }
   }
