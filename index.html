@@ -1553,8 +1553,10 @@ window.__gofitNativeGoogle=async function(payload){
 var msg=$("am");
 if(!payload||payload.error||!payload.idToken){
 setAuthBusy(false);
-if(payload&&payload.error&&payload.error!=="cancelled"&&payload.error!=="native-google-not-configured")sayAuth(msg,"Google sign-in could not be completed. Try again.");
-if(msg)msg.textContent=payload&&payload.error==="native-google-not-configured"?"Google sign-in is not configured in this build yet.":"";
+var e=payload&&payload.error;
+if(e==="native-google-not-configured"){if(msg)msg.textContent="Google sign-in is not configured in this build yet.";return}
+if(e&&e!=="cancelled")sayAuth(msg,e);
+if(msg&&!e)msg.textContent="";
 return;
 }
 if(!window.sb){setAuthBusy(false);sayAuth(msg,"Still connecting. Try again in a moment.");return}
