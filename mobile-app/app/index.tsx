@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { StatusBar } from 'expo-status-bar';
@@ -43,9 +43,29 @@ export default function App() {
   const [pageReady, setPageReady] = useState(false);
   const [healthData, setHealthData] = useState<HealthPayload | null>(null);
 
-  useEffect(() => {
-    fetchHealthData().then(setHealthData);
+  const lastHealthFetch = useRef(0);
+
+  const syncHealth = useCallback(async (force = false) => {
+    if (!force && Date.now() - lastHealthFetch.current < 60000) return;
+    lastHealthFetch.current = Date.now();
+    try {
+      const data = await fetchHealthData();
+      console.log(
+        '[gofit-health] fetched:',
+        data
+          ? `steps=${Object.keys(data.steps).length}d weight=${!!data.weight} workouts=${data.workouts.length}`
+          : 'null',
+      );
+      setHealthData(data);
+    } catch (e) {
+      console.log('[gofit-health] fetch failed:', e);
+    }
   }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot fetch on mount; setState happens after the async health read
+    syncHealth(true);
+  }, [syncHealth]);
 
   useEffect(() => {
     if (pageReady && healthData) {
@@ -54,8 +74,11 @@ export default function App() {
         healthData.weight ||
         healthData.workouts.length > 0;
       if (hasData) {
+        // Stash the payload and call __gofitHealth if it exists; the page
+        // flushes __gofitPendingHealth itself once its boot script finishes,
+        // so a slow CDN/module load can't drop the data.
         webViewRef.current?.injectJavaScript(
-          `window.__gofitHealth&&window.__gofitHealth(${JSON.stringify(healthData)});true;`,
+          `window.__gofitPendingHealth=${JSON.stringify(healthData)};if(window.__gofitHealth)window.__gofitHealth(window.__gofitPendingHealth);true;`,
         );
       }
     }
@@ -107,6 +130,8 @@ export default function App() {
       const msg = JSON.parse(event.nativeEvent.data);
       if (msg && msg.type === 'gofit:google-signin') {
         handleGoogleSignIn();
+      } else if (msg && msg.type === 'gofit:health-request') {
+        syncHealth();
       }
     } catch {
       // ignore non-JSON messages
